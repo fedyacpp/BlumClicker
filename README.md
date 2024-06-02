@@ -4,7 +4,7 @@ BlumClicker is an automated solution designed to interact with the Telegram inte
 
 ## Installation
 
-The project requires Python 3.x and CUDA for GPU support (if GPU capabilities are utilized). It has been tested with Python 3.10 and CUDA 12.1.
+The project requires Python 3.x and CUDA for GPU support (if GPU capabilities are utilized). It has been tested with Python 3.10 and CUDA 12.5.
 
 ### Installation Steps
 
