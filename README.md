@@ -16,7 +16,7 @@ The project requires Python 3.x and CUDA for GPU support (if GPU capabilities ar
 
 2. Install PyTorch with CUDA support:
    ```bash
-   pip install torch==1.13.1+cu121 torchvision==0.14.1+cu121 torchaudio==0.13.1+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
    ```
 
    For installation without CUDA support (CPU-only):
