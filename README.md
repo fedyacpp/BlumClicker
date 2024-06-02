@@ -33,6 +33,16 @@ The project requires Python 3.x and CUDA for GPU support (if GPU capabilities ar
    - Download the weights from this [link](https://drive.google.com/file/d/1lUTl4GulseoWs_vhPnYp0qkIYaumKMNg/view?usp=sharing).
    - Place the downloaded weights file in the same directory as the script, or specify the path to the weights file when running the script.
 
+### Verifying CUDA Installation
+
+To ensure that CUDA drivers are correctly installed, you can run the `isCudaAvailable.py` script included in the repository. Simply execute the following command:
+
+```bash
+python isCudaAvailable.py
+```
+
+This script will check the availability and proper functioning of CUDA drivers on your system. If everything is set up correctly, you should see a message displaying both your CUDA's and gpu's info.
+
 ### Running the Script
 
 To start the script, run:
