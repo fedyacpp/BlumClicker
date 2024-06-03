@@ -21,6 +21,7 @@ from rich.console import Console
 from rich.live import Live
 from rich.prompt import Prompt
 from rich.progress import Progress
+from rich.text import Text
 
 CONFIDENCE_THRESHOLD = 0.4
 IOU_THRESHOLD = 0.5
@@ -28,15 +29,41 @@ WINDOW_TITLE = "Telegram"
 STOP_SIGNAL = False
 CTRL_Q_PRESSED_ONCE = False
 FRAME_SKIP = 1
+PAUSE_SIGNAL = False
 
-console = Console()
 click_counters = {}
 
+class MessagesPanel(Panel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.max_lines = 10
+        self.messages = []
 
-def load_model():
-    console.log("[blue]Loading model...[/blue]", highlight=True)
+    def add_message(self, message):
+        self.messages.append(message)
+        self.renderable = Text.from_markup("\n".join(self.messages[-self.max_lines:]))
+
+class CustomConsole(Console):
+    def __init__(self, *args, messages_panel=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.messages_panel = messages_panel
+
+    def log(self, *objects, **kwargs):
+        highlight = kwargs.pop("highlight", False)
+        message = Text.assemble(*objects)
+        if highlight:
+            message.stylize("bold")
+
+        if self.messages_panel:
+            formatted_message = f"[{time.strftime('%H:%M:%S')}] {message.markup}"
+            self.messages_panel.add_message(formatted_message)
+        else:
+            super().log(message, **kwargs)
+
+def load_model(console):
+    console.log(Text("Loading model...", style="blue"))
     default_model_path = os.path.join(os.path.dirname(__file__), 'best.pt')
-    model_path = Prompt.ask("[bold magenta]Path to model weights file[/bold magenta]", default=default_model_path)
+    model_path = Prompt.ask(Text("Path to model weights file", style="bold magenta"), default=default_model_path)
     with Progress() as progress:
         task = progress.add_task("[cyan]Loading...", total=100)
         device = select_device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -44,9 +71,8 @@ def load_model():
         model = model.to(device)
         model.warmup(imgsz=(1, 3, 416, 416))
         progress.update(task, advance=100)
-    console.log("[green]Model loaded![/green]", highlight=True)
+    console.log(Text("Model loaded!", style="green"), highlight=True)
     return model, device
-
 
 def preprocess_image(image, device):
     image = cv2.resize(image, (416, 416))
@@ -55,30 +81,37 @@ def preprocess_image(image, device):
     image = np.ascontiguousarray(image)
     return torch.from_numpy(image).float().div(255.0).unsqueeze(0).to(device)
 
-
-def find_telegram_window(title_keyword=WINDOW_TITLE):
-    console.log(f"[blue]Searching for window '{title_keyword}'...[/blue]", highlight=True)
+def find_telegram_window(console, title_keyword=WINDOW_TITLE):
+    console.log(Text(f"Searching for window '{title_keyword}'...", style="blue"), highlight=True)
     windows = gw.getWindowsWithTitle(title_keyword)
     if not windows:
-        console.log(f"[red]Window '{title_keyword}' not found[/red]", justify="center")
+        console.log(Text(f"Window '{title_keyword}' not found", style="red"), highlight=True)
         return None
-    console.log(f"[green]Window '{windows[0].title}' found![/green]", highlight=True)
+    console.log(Text(f"Window '{windows[0].title}' found!", style="green"), highlight=True)
     return windows[0]
 
+def update_window_coordinates(window):
+    window.update()
+    return {'left': window.left, 'top': window.top, 'width': window.width, 'height': window.height}
 
-def capture_telegram_window(window):
-    global STOP_SIGNAL
+def capture_telegram_window(console, window):
+    global STOP_SIGNAL, PAUSE_SIGNAL
     hwnd = window._hWnd
-    bbox = {'left': window.left, 'top': window.top, 'width': window.width, 'height': window.height}
-    with mss.mss() as sct:
-        while not STOP_SIGNAL:
+    while not STOP_SIGNAL:
+        if PAUSE_SIGNAL:
+            time.sleep(0.1)
+            continue
+
+        window_rect = win32gui.GetWindowRect(hwnd)
+        bbox = {'left': window_rect[0], 'top': window_rect[1], 'width': window_rect[2] - window_rect[0], 'height': window_rect[3] - window_rect[1]}
+        
+        with mss.mss() as sct:
             screenshot = sct.grab(bbox)
             img = np.array(screenshot)
             img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
-            yield img
+            yield img, bbox
 
-
-def perform_click(x, y):
+def perform_click(console, x, y):
     global click_counters
     win32api.SetCursorPos((x, y))
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, x, y, 0, 0)
@@ -87,22 +120,28 @@ def perform_click(x, y):
     if (x, y) not in click_counters:
         click_counters[(x, y)] = 0
     click_counters[(x, y)] += 1
+    
+    return x, y, click_counters[(x, y)]
 
-    return (x, y, click_counters[(x, y)])
-
-
-def check_keyboard():
-    global STOP_SIGNAL, CTRL_Q_PRESSED_ONCE
-    while not STOP_SIGNAL:
+def check_keyboard(console):
+    global STOP_SIGNAL, CTRL_Q_PRESSED_ONCE, PAUSE_SIGNAL
+    while True:
         if keyboard.is_pressed("ctrl+q"):
             if not CTRL_Q_PRESSED_ONCE:
-                console.log("[yellow]CTRL+Q. Press again to exit.[/yellow]", highlight=True)
+                console.log(Text("CTRL+Q pressed. Press again to exit.", style="yellow"), highlight=True)
                 CTRL_Q_PRESSED_ONCE = True
             else:
-                console.log("[green]Exiting...[/green]", highlight=True)
+                console.log(Text("Exiting...", style="green"), highlight=True)
                 STOP_SIGNAL = True
+                break
+        elif keyboard.is_pressed("ctrl+x"):
+            if not PAUSE_SIGNAL:
+                console.log(Text("Script paused. Press CTRL+X again to resume.", style="magenta"), highlight=True)
+                PAUSE_SIGNAL = True
+            else:
+                console.log(Text("Script resumed.", style="magenta"), highlight=True)
+                PAUSE_SIGNAL = False
         time.sleep(0.1)
-
 
 def get_system_info():
     cpu_usage = psutil.cpu_percent()
@@ -129,8 +168,7 @@ def get_system_info():
         "GPU Usage": gpu_usage
     }
 
-
-def bring_window_to_foreground(window):
+def bring_window_to_foreground(console, window):
     hwnd = window._hWnd
     try:
         window_thread, _ = win32process.GetWindowThreadProcessId(hwnd)
@@ -146,40 +184,44 @@ def bring_window_to_foreground(window):
         if window_thread != current_thread:
             win32process.AttachThreadInput(window_thread, current_thread, False)
 
-        console.log(f"[green]Window '{window.title}' brought to the foreground![/green]", highlight=True)
+        console.log(Text(f"Window '{window.title}' brought to the foreground!", style="green"), highlight=True)
     except Exception as e:
-        console.log(f"[red]Error: {e}[/red]", highlight=True)
-
+        console.log(Text(f"Error: {e}", style="red"), highlight=True)
 
 def main():
     global STOP_SIGNAL
     last_click_info = None
 
-    console.log("[blue]Starting...[/blue]", highlight=True)
-    model, device = load_model()
-    window = find_telegram_window()
+    messages_panel = MessagesPanel("", title="Messages", border_style="blue")
+    console = CustomConsole(messages_panel=messages_panel)
+
+    console.log(Text("Starting...", style="blue"), highlight=True)
+    model, device = load_model(console)
+    window = find_telegram_window(console)
     if not window:
-        console.log("[red]Telegram window not found. Exiting...[/red]", highlight=True)
+        console.messages_panel.add_message("[red]Telegram window not found. Exiting...[/red]")
         return
 
-    keyboard_thread = threading.Thread(target=check_keyboard)
+    keyboard_thread = threading.Thread(target=check_keyboard, args=(console,))
     keyboard_thread.start()
 
-    bring_window_to_foreground(window)
+    bring_window_to_foreground(console, window)
 
-    capture_gen = capture_telegram_window(window)
+    capture_gen = capture_telegram_window(console, window)
     frame_count = 0
 
     with Live(console=console, refresh_per_second=10) as live:
         while True:
             if STOP_SIGNAL:
-                console.log("[green]Stopping...[/green]", highlight=True)
+                console.messages_panel.add_message(
+                    f"[{time.strftime('%H:%M:%S')}] [green]Exiting...[/green]"
+                )
                 break
 
             start_time = time.time()
 
             try:
-                screenshot = next(capture_gen)
+                screenshot, bbox = next(capture_gen)
                 if frame_count % FRAME_SKIP == 0:
                     preprocessed_frame = preprocess_image(screenshot, device)
 
@@ -187,7 +229,8 @@ def main():
                         prediction = model(preprocessed_frame, augment=False, visualize=False)[0]
 
                     predictions = non_max_suppression(
-                        prediction, conf_thres=CONFIDENCE_THRESHOLD, iou_thres=IOU_THRESHOLD, agnostic=False)
+                        prediction, conf_thres=CONFIDENCE_THRESHOLD, iou_thres=IOU_THRESHOLD, agnostic=False
+                    )
                 else:
                     predictions = []
 
@@ -198,17 +241,26 @@ def main():
 
                         if score > 0.5:
                             x1, y1, x2, y2 = xyxy
-                            width_scale = (window.width) / 416
-                            height_scale = (window.height) / 416
-                            x1, y1, x2, y2 = int(x1 * width_scale), int(y1 * height_scale), int(
-                                x2 * width_scale), int(y2 * height_scale)
+                            width_scale = bbox['width'] / 416
+                            height_scale = bbox['height'] / 416
+                            x1, y1, x2, y2 = (
+                                int(x1 * width_scale),
+                                int(y1 * height_scale),
+                                int(x2 * width_scale),
+                                int(y2 * height_scale),
+                            )
 
-                            x1, y1, x2, y2 = x1 + window.left, y1 + window.top, x2 + window.left, y2 + window.top
+                            x1, y1, x2, y2 = (
+                                x1 + bbox['left'],
+                                y1 + bbox['top'],
+                                x2 + bbox['left'],
+                                y2 + bbox['top'],
+                            )
 
-                            last_click_info = perform_click((x1 + x2) // 2, (y1 + y2) // 2)
+                            last_click_info = perform_click(console, (x1 + x2) // 2, (y1 + y2) // 2)
 
                 elapsed_time = time.time() - start_time
-                fps = 1 / elapsed_time if elapsed_time > 0 else float('inf')
+                fps = 1 / elapsed_time if elapsed_time > 0 else float("inf")
 
                 system_info = get_system_info()
                 if last_click_info:
@@ -216,7 +268,7 @@ def main():
                     click_info_panel = Panel(
                         f"Last click: ({x}, {y})\nClicks: {count}",
                         title="Click Info",
-                        border_style="yellow"
+                        border_style="yellow",
                     )
                 else:
                     click_info_panel = Panel("No clicks", title="Click Info", border_style="yellow")
@@ -229,13 +281,24 @@ def main():
                     f"GPU: {system_info['GPU']}\n"
                     f"GPU Usage: {system_info['GPU Usage']}",
                     title="System Info",
-                    border_style="green"
+                    border_style="green",
+                )
+
+                hotkeys_panel = Panel(
+                    Text("CTRL+Q - Exit\nCTRL+X - Pause/Resume"),
+                    title="Hotkeys",
+                    border_style="magenta"
                 )
 
                 layout = Layout()
-                layout.split_column(
+                layout.split_row(
+                    Layout(name="left"),
+                    Layout(messages_panel, name="right"),
+                )
+                layout["left"].split_column(
                     Layout(click_info_panel),
-                    Layout(system_info_panel)
+                    Layout(system_info_panel),
+                    Layout(hotkeys_panel)
                 )
 
                 live.update(layout)
@@ -245,13 +308,11 @@ def main():
             except StopIteration:
                 break
             except Exception as e:
-                console.log(f"[red]Error: {e}[/red]")
+                console.log(Text(f"Error: {e}", style="red"))
                 STOP_SIGNAL = True
 
     cv2.destroyAllWindows()
     keyboard_thread.join()
-    console.log("[blue]Exiting.[/blue]", highlight=True)
-
 
 if __name__ == "__main__":
     main()
