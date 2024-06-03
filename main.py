@@ -277,7 +277,7 @@ def main():
                     f"FPS: {fps:.2f}\n"
                     f"CPU: {system_info['CPU Usage']}\n"
                     f"RAM: {system_info['Memory Usage']}\n"
-                    f"RAM Total: {system_info['Total Memory']} GB\n"
+                    f"RAM Total: {system_info['Total Memory']}\n"
                     f"GPU: {system_info['GPU']}\n"
                     f"GPU Usage: {system_info['GPU Usage']}",
                     title="System Info",
