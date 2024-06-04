@@ -23,13 +23,15 @@ from rich.prompt import Prompt
 from rich.progress import Progress
 from rich.text import Text
 
-CONFIDENCE_THRESHOLD = 0.4
+CONFIDENCE_THRESHOLD = 0.8
 IOU_THRESHOLD = 0.5
 WINDOW_TITLE = "Telegram"
 STOP_SIGNAL = False
 CTRL_Q_PRESSED_ONCE = False
 FRAME_SKIP = 1
 PAUSE_SIGNAL = False
+
+TARGET_ID = 1 
 
 click_counters = {}
 
@@ -238,8 +240,9 @@ def main():
                     for det in predictions[0]:
                         xyxy = det[:4].tolist()
                         score = det[4].item()
+                        class_id = int(det[5].item())
 
-                        if score > 0.5:
+                        if score > 0.5 and class_id == TARGET_ID:
                             x1, y1, x2, y2 = xyxy
                             width_scale = bbox['width'] / 416
                             height_scale = bbox['height'] / 416
