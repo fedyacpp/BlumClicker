@@ -1,17 +1,20 @@
 # BlumClicker
 
+**Important: The model weights download link has been updated. Please re-download the weights file even if you have downloaded it before.**
+
 ~100% accuracy [video](https://photos.app.goo.gl/YBA8ETyRXX5Evym99)
 
 *RU README [here](https://github.com/fedyacpp/BlumClicker/blob/main/README_ru.md).*
 
-BlumClicker is a tool that automates interacting with Telegram using image-based object detection powered by YOLOv5. It’s specially trained to spot snowflakes in Blum's Drop Game.
+BlumClicker is a tool that automates interacting with Telegram using image-based object detection powered by YOLOv5. It’s specifically trained to spot snowflakes in Blum's Drop Game.
 
 ## TODO
 
 - [x] Add more info in readme
 - [x] Show more info in terminal
 - [x] Make script more user-friendly
-- [ ] Train model for even better accuracy
+- [x] Train model for even better accuracy
+- [ ] Add settings (for custom delay between/before clicks for example)
 - [ ] Add even MORE info in readme
 
 ## Installation
@@ -20,9 +23,9 @@ You'll need Python 3.x and CUDA if you want to use GPU support. This has been te
 
 ### How to Install
 
-1. **Get CUDA Toolkit:**
+1. **Get CUDA Toolkit (for NVIDIA GPUs):**
 
-   To use GPU support (NVIDIA GPUs only), you need to install the CUDA Toolkit. Here’s how:
+   To use GPU support, you need to install the CUDA Toolkit. Here’s how:
 
    - Head over to the [CUDA Toolkit Download Page](https://developer.nvidia.com/cuda-downloads).
    - Pick your operating system and grab the right installer for your setup.
@@ -50,10 +53,10 @@ You'll need Python 3.x and CUDA if you want to use GPU support. This has been te
    ```
 
 5. **Download the model weights:**
-   - Grab the weights from this [link](https://drive.google.com/file/d/1lUTl4GulseoWs_vhPnYp0qkIYaumKMNg/view?usp=sharing).
-   - Put the downloaded weights file in the same directory as the script, or specify its path when you run the script.
+   - Download the weights from this [link](https://drive.google.com/file/d/1lUTl4GulseoWs_vhPnYp0qkIYaumKMNg/view?usp=sharing).
+   - Place the downloaded weights file (`best.pt`) in the same directory as the script, or specify its path when you run the script.
 
-### Check CUDA Installation
+### Check CUDA Installation (for NVIDIA GPU users)
 
 To make sure CUDA is installed properly, run the `isCudaAvailable.py` script included in the repo:
 
@@ -84,6 +87,6 @@ To exit the script gracefully, press `CTRL+Q` twice.
 
 ## Troubleshooting
 
-If you hit any snags, double-check that CUDA is installed right and that your library versions match your CUDA version. Pay attention to error messages in the console and logs.
+If you hit any snags, double-check that CUDA is installed correctly and that your library versions match your CUDA version. Pay attention to error messages in the console and logs.
 
 If you’re stuck or have questions, open an issue or hit me up on Discord: [https://discord.com/users/fedyacpp](https://discord.com/users/fedyacpp).
