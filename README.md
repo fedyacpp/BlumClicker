@@ -1,4 +1,4 @@
-# BlumClicker
+## BlumClicker
 
 **Important: The model weights download link has been updated. Please re-download the weights file even if you have downloaded it before.**
 
@@ -7,6 +7,11 @@
 *RU README [here](https://github.com/fedyacpp/BlumClicker/blob/main/README_ru.md).*
 
 BlumClicker is a tool that automates interacting with Telegram using image-based object detection powered by YOLOv5. It’s specifically trained to spot snowflakes in Blum's Drop Game.
+
+## Requirements
+
+* **NVIDIA GPU (Recommended):** For optimal performance, an NVIDIA graphics card from the RTX 20 series or newer is highly recommended. This is due to the reliance on CUDA cores for YOLOv5's object detection. 
+* **CPU (Alternative):**  If you don't have a compatible NVIDIA GPU, you can still run the script using your CPU. However, be aware that the frame rate will be significantly lower, potentially leading to inaccurate clicks as the snowflakes might move before the script reacts.
 
 ## TODO
 
@@ -89,4 +94,4 @@ To exit the script gracefully, press `CTRL+Q` twice.
 
 If you hit any snags, double-check that CUDA is installed correctly and that your library versions match your CUDA version. Pay attention to error messages in the console and logs.
 
-If you’re stuck or have questions, open an issue or hit me up on Discord: [https://discord.com/users/fedyacpp](https://discord.com/users/fedyacpp).
+If you’re stuck or have questions, open an issue or hit me up on [Discord](https://discord.com/users/fedyacpp). 
