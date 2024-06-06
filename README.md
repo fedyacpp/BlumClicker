@@ -2,9 +2,9 @@
 
 **Important: The model weights download link has been updated. Please re-download the weights file even if you have downloaded it before.**
 
-~100% accuracy [video](https://photos.app.goo.gl/YBA8ETyRXX5Evym99)
+~100% accuracy [video](https://photos.app.goo.gl/TYiW38Hc1g3Qqbnu5)
 
-*RU README [here](https://github.com/fedyacpp/BlumClicker/blob/main/README_ru.md).*
+*Русский README [здесь](https://github.com/fedyacpp/BlumClicker/blob/main/README_ru.md).*
 
 BlumClicker is a tool that automates interacting with Telegram using image-based object detection powered by YOLOv5. It’s specifically trained to spot snowflakes in Blum's Drop Game.
 
