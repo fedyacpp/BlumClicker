@@ -19,7 +19,8 @@ BlumClicker is a tool that automates interacting with Telegram using image-based
 - [x] Show more info in terminal
 - [x] Make script more user-friendly
 - [x] Train model for even better accuracy
-- [ ] Add settings (for custom delay between/before clicks for example)
+- [x] Add settings (for custom delay between/before clicks for example)
+- [ ] Add click probabilty
 - [ ] Add even MORE info in readme
 
 ## Installation
