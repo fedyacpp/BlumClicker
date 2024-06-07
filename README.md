@@ -1,17 +1,19 @@
 ## BlumClicker
 
-**Important: The model weights download link has been updated. Please re-download the weights file even if you have downloaded it before.**
+**Heads up: I've updated the model weights download link. Re-download the weights file even if you've grabbed it before.**
 
-~100% accuracy [video](https://photos.app.goo.gl/TYiW38Hc1g3Qqbnu5)
+Achieve ~100% accuracy [watch here](https://photos.app.goo.gl/TYiW38Hc1g3Qqbnu5).
 
 *Русский README [здесь](https://github.com/fedyacpp/BlumClicker/blob/main/README_ru.md).*
 
-BlumClicker is a tool that automates interacting with Telegram using image-based object detection powered by YOLOv5. It’s specifically trained to spot snowflakes in Blum's Drop Game.
+BlumClicker automates interactions with Telegram using image-based object detection via YOLOv5. It's designed to spot snowflakes in Blum's Drop Game.
 
 ## Requirements
 
-* **NVIDIA GPU (Recommended):** For optimal performance, an NVIDIA graphics card from the RTX 20 series or newer is highly recommended. This is due to the reliance on CUDA cores for YOLOv5's object detection. 
-* **CPU (Alternative):**  If you don't have a compatible NVIDIA GPU, you can still run the script using your CPU. However, be aware that the frame rate will be significantly lower, potentially leading to inaccurate clicks as the snowflakes might move before the script reacts.
+* **NVIDIA GPU (Recommended):** From any other GPUs, this script will work only with an NVIDIA RTX series. YOLOv5 relies heavily on CUDA cores.
+* **CPU (Alternative):** You can run the script on a CPU if you don't have an NVIDIA GPU, but expect it to be much slower and less accurate.
+
+**Note:** You need the desktop version of Telegram for this script to work.
 
 ## TODO
 
@@ -19,23 +21,21 @@ BlumClicker is a tool that automates interacting with Telegram using image-based
 - [x] Show more info in terminal
 - [x] Make script more user-friendly
 - [x] Train model for even better accuracy
-- [x] Add settings (for custom delay between/before clicks for example)
-- [ ] Add click probabilty
+- [x] Add settings (e.g., custom delay between/before clicks)
+- [ ] Collect even more photos in dataset
+- [ ] Add click probability
 - [ ] Add even MORE info in readme
 
 ## Installation
 
-You'll need Python 3.x and CUDA if you want to use GPU support. This has been tested with Python 3.10 and CUDA 12.5.
+You'll need Python 3.x and CUDA for GPU support. Tested with Python 3.10 and CUDA 12.5.
 
-### How to Install
+### Steps to Install
 
 1. **Get CUDA Toolkit (for NVIDIA GPUs):**
-
-   To use GPU support, you need to install the CUDA Toolkit. Here’s how:
-
-   - Head over to the [CUDA Toolkit Download Page](https://developer.nvidia.com/cuda-downloads).
-   - Pick your operating system and grab the right installer for your setup.
-   - Download and run the installer, then just follow the steps to get it set up.
+   - Visit the [CUDA Toolkit Download Page](https://developer.nvidia.com/cuda-downloads).
+   - Choose your OS and get the right installer.
+   - Download, run the installer, and follow the setup steps.
 
 2. **Clone the Repo:**
    ```bash
@@ -48,33 +48,33 @@ You'll need Python 3.x and CUDA if you want to use GPU support. This has been te
    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
    ```
 
-   If you don’t have an NVIDIA GPU and need to run on CPU (which will be slower):
+   If you're using a CPU (much slower image processing):
    ```bash
    pip install torch torchvision torchaudio
    ```
 
-4. **Install the rest of the dependencies:**
+4. **Install the remaining dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
 5. **Download the model weights:**
-   - Download the weights from this [link](https://drive.google.com/file/d/1lUTl4GulseoWs_vhPnYp0qkIYaumKMNg/view?usp=sharing).
-   - Place the downloaded weights file (`best.pt`) in the same directory as the script, or specify its path when you run the script.
+   - Get the weights from this [link](https://drive.google.com/file/d/1lUTl4GulseoWs_vhPnYp0qkIYaumKMNg/view?usp=sharing).
+   - Place the `best.pt` file in the same directory as the script, or specify its path when running the script.
 
 ### Check CUDA Installation (for NVIDIA GPU users)
 
-To make sure CUDA is installed properly, run the `isCudaAvailable.py` script included in the repo:
+To verify CUDA installation, run the `isCudaAvailable.py` script in the repo:
 
 ```bash
 python isCudaAvailable.py
 ```
 
-This will check if your CUDA drivers are good to go. If everything's set up right, you’ll see a message with your CUDA and GPU info.
+If everything's set up right, you'll see your CUDA and GPU info.
 
 ### Running the Script
 
-Make sure you have the Blum window open in your Telegram app before running the script. Otherwise, it won't work.
+Ensure the Blum window is open in your Telegram desktop app before running the script.
 
 To start the script, just run:
 ```bash
@@ -83,16 +83,16 @@ python main.py
 
 ## Exiting the Script
 
-To exit the script gracefully, press `CTRL+Q` twice.
+To exit, press `CTRL+Q` twice.
 
 ## Features
 
-- **Telegram Window Search:** Automatically finds an open Telegram window on your computer.
-- **Object Detection:** Uses YOLOv5 to spot objects in the Telegram window.
-- **Automated Clicking:** Clicks on the detected objects.
+- **Telegram Window Search:** Finds an open Telegram window on your desktop.
+- **Object Detection:** Uses YOLOv5 to detect objects in the Telegram window.
+- **Automated Clicking:** Clicks on detected objects.
 
 ## Troubleshooting
 
-If you hit any snags, double-check that CUDA is installed correctly and that your library versions match your CUDA version. Pay attention to error messages in the console and logs.
+If you run into issues, double-check your CUDA installation and library versions. Pay attention to error messages in the console and logs.
 
-If you’re stuck or have questions, open an issue or hit me up on [Discord](https://discord.com/users/fedyacpp). 
+Need help? Open an issue or message me on [Discord](https://discord.com/users/fedyacpp)/[Telegram](t.me/fedyacpp).
