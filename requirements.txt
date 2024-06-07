@@ -6,5 +6,4 @@ keyboard
 pywin32
 mss
 torch
-tkinter
 rich

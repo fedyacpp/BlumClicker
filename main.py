@@ -13,6 +13,7 @@ import win32api
 import win32con
 import mss
 import tkinter as tk
+import json
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.torch_utils import select_device
 from yolov5.utils.general import non_max_suppression
@@ -33,6 +34,9 @@ FRAME_SKIP = 1
 PAUSE_SIGNAL = False
 SETTINGS_SIGNAL = False
 TARGET_ID = 1
+FPS_LOCK = 60
+SHOW_DEBUG_WINDOW = False
+SETTINGS_FILE = "settings.json"
 
 DELAY_BETWEEN_CLICKS = 0
 DELAY_BEFORE_CLICK = 0
@@ -109,7 +113,12 @@ def capture_telegram_window(console, window):
             continue
 
         window_rect = win32gui.GetWindowRect(hwnd)
-        bbox = {"left": window_rect[0], "top": window_rect[1], "width": window_rect[2] - window_rect[0], "height": window_rect[3] - window_rect[1]}
+        bbox = {
+            "left": window_rect[0],
+            "top": window_rect[1],
+            "width": window_rect[2] - window_rect[0],
+            "height": window_rect[3] - window_rect[1],
+        }
 
         with mss.mss() as sct:
             screenshot = sct.grab(bbox)
@@ -198,64 +207,84 @@ def bring_window_to_foreground(console, window):
     except Exception as e:
         console.log(Text(f"Error: {e}", style="red"), highlight=True)
 
-def show_settings(console):
-    global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, SETTINGS_SIGNAL
+def load_settings():
+    global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, FPS_LOCK
+    settings_file = SETTINGS_FILE
 
-    def save_settings():
-        global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, SETTINGS_SIGNAL
-        try:
-            delay_between_clicks = delay_between_clicks_entry.get()
-            delay_before_click = delay_before_click_entry.get()
+    if not os.path.exists(settings_file):
+        print("Settings file does not exist. Using default settings.")
+        return
 
-            if delay_between_clicks == "" or delay_before_click == "":
-                raise ValueError("All fields must be filled out.")
+    try:
+        with open(settings_file, "r") as file:
+            settings = json.load(file)
+            DELAY_BETWEEN_CLICKS = settings.get("DELAY_BETWEEN_CLICKS", DELAY_BETWEEN_CLICKS)
+            DELAY_BEFORE_CLICK = settings.get("DELAY_BEFORE_CLICK", DELAY_BEFORE_CLICK)
+            FPS_LOCK = settings.get("FPS_LOCK", FPS_LOCK)
+            print("Settings loaded successfully.")
+    except json.JSONDecodeError:
+        print("Error: JSON file is empty or invalid. Using default settings.")
+    except Exception as e:
+        print(f"Unexpected error loading settings: {e}. Using default settings.")
 
-            delay_between_clicks = float(delay_between_clicks)
-            delay_before_click = float(delay_before_click)
+def save_settings():
+    settings = {
+        "DELAY_BETWEEN_CLICKS": DELAY_BETWEEN_CLICKS,
+        "DELAY_BEFORE_CLICK": DELAY_BEFORE_CLICK,
+        "FPS_LOCK": FPS_LOCK,
+    }
+    with open(SETTINGS_FILE, "w") as file:
+        json.dump(settings, file, indent=4)
 
-            DELAY_BETWEEN_CLICKS = delay_between_clicks
-            DELAY_BEFORE_CLICK = delay_before_click
-
-            console.log(Text("Settings saved!", style="green"), highlight=True)
-        except ValueError as e:
-            console.log(Text(f"Invalid input: {e}", style="red"))
-        else:
-            settings_window.destroy()
-            SETTINGS_SIGNAL = False
-
-    def close_settings():
-        global SETTINGS_SIGNAL
-        SETTINGS_SIGNAL = False
-        settings_window.destroy()
-
+def show_settings_panel(console):
+    global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, FPS_LOCK, SETTINGS_SIGNAL
     settings_window = tk.Tk()
     settings_window.title("Settings")
-    settings_window.configure(bg="#2e2e2e")
-    settings_window.geometry("400x170")
-    settings_window.attributes("-topmost", True)
 
-    label_style = {"bg": "#2e2e2e", "fg": "#f0f0f0", "font": ("Helvetica", 10)}
-    entry_style = {"bg": "#3e3e3e", "fg": "#f0f0f0", "insertbackground": "#f0f0f0", "font": ("Helvetica", 10)}
-    button_style = {"bg": "#5e5e5e", "fg": "#f0f0f0", "font": ("Helvetica", 10)}
+    settings_window.configure(bg='black')
 
-    tk.Label(settings_window, text="Delay Between Clicks (s)", **label_style).grid(row=0, column=0, padx=10, pady=5)
-    delay_between_clicks_entry = tk.Entry(settings_window, **entry_style)
-    delay_between_clicks_entry.grid(row=0, column=1, padx=10, pady=5)
+    dark_style = {'bg': 'black', 'fg': 'white'}
+    
+    tk.Label(settings_window, text="Delay Between Clicks (seconds):", **dark_style).pack()
+    delay_between_clicks_entry = tk.Entry(settings_window, **dark_style)
     delay_between_clicks_entry.insert(0, str(DELAY_BETWEEN_CLICKS))
+    delay_between_clicks_entry.pack()
 
-    tk.Label(settings_window, text="Delay Before Click (s)", **label_style).grid(row=1, column=0, padx=10, pady=5)
-    delay_before_click_entry = tk.Entry(settings_window, **entry_style)
-    delay_before_click_entry.grid(row=1, column=1, padx=10, pady=5)
+    tk.Label(settings_window, text="Delay Before Click (seconds):", **dark_style).pack()
+    delay_before_click_entry = tk.Entry(settings_window, **dark_style)
     delay_before_click_entry.insert(0, str(DELAY_BEFORE_CLICK))
+    delay_before_click_entry.pack()
 
-    tk.Button(settings_window, text="Save", command=save_settings, **button_style).grid(row=3, column=0, padx=10, pady=20)
-    tk.Button(settings_window, text="Close", command=close_settings, **button_style).grid(row=3, column=1, padx=10, pady=20)
+    tk.Label(settings_window, text="FPS Lock:", **dark_style).pack()
+    fps_lock_entry = tk.Entry(settings_window, **dark_style)
+    fps_lock_entry.insert(0, str(FPS_LOCK))
+    fps_lock_entry.pack()
 
+    settings_window.attributes('-topmost', True)
+
+    def save_and_close():
+        global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, FPS_LOCK, SETTINGS_SIGNAL
+        try:
+            DELAY_BETWEEN_CLICKS = float(delay_between_clicks_entry.get())
+            DELAY_BEFORE_CLICK = float(delay_before_click_entry.get())
+            FPS_LOCK = int(fps_lock_entry.get())
+            save_settings()
+            console.log(Text("Settings updated!", style="green"), highlight=True)
+        except ValueError:
+            console.log(Text("Error: Invalid input. Please enter valid numbers.", style="red"), highlight=True)
+
+        settings_window.destroy()
+        SETTINGS_SIGNAL = False
+
+    tk.Button(settings_window, text="Save", command=save_and_close, bg='grey', fg='white').pack()
+    settings_window.protocol("WM_DELETE_WINDOW", save_and_close)
     settings_window.mainloop()
 
 def main():
-    global STOP_SIGNAL, SETTINGS_SIGNAL
+    global STOP_SIGNAL, SETTINGS_SIGNAL, FPS_LOCK
     last_click_info = None
+
+    load_settings()
 
     messages_panel = MessagesPanel("", title="Messages", border_style="blue")
     console = CustomConsole(messages_panel=messages_panel)
@@ -277,11 +306,13 @@ def main():
     bring_window_to_foreground(console, window)
     capture_gen = capture_telegram_window(console, window)
     frame_count = 0
+    last_frame_time = time.time()
 
-    with Live(console=console, refresh_per_second=10) as live:
+    with Live(console=console, refresh_per_second=FPS_LOCK) as live:
         while not STOP_SIGNAL:
             if SETTINGS_SIGNAL:
-                show_settings(console)
+                show_settings_panel(console)
+                save_settings()
                 SETTINGS_SIGNAL = False
                 continue
 
@@ -319,9 +350,18 @@ def main():
                         time.sleep(DELAY_BEFORE_CLICK)
                         last_click_info = perform_click(console, (x1 + x2) // 2, (y1 + y2) // 2)
                         time.sleep(DELAY_BETWEEN_CLICKS)
+                        
+                        cv2.rectangle(screenshot, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                        cv2.putText(screenshot, f'{class_id}: {score:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
-            elapsed_time = time.time() - start_time
-            fps = 1 / elapsed_time if elapsed_time > 0 else float("inf")
+            current_time = time.time()
+            elapsed_time = current_time - last_frame_time
+            fps = 1 / elapsed_time if elapsed_time > 0 else float('inf')
+            last_frame_time = current_time
+
+            target_frame_time = 1 / FPS_LOCK
+            if elapsed_time < target_frame_time:
+                time.sleep(target_frame_time - elapsed_time)
 
             system_info = get_system_info()
             if last_click_info:
@@ -345,7 +385,6 @@ def main():
             live.update(layout)
             frame_count += 1
 
-    cv2.destroyAllWindows()
     keyboard_thread.join()
 
 if __name__ == "__main__":
