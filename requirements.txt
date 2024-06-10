@@ -7,3 +7,5 @@ pywin32
 mss
 torch
 rich
+easyocr
+queue

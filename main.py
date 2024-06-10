@@ -14,6 +14,8 @@ import win32con
 import mss
 import tkinter as tk
 import json
+import easyocr
+import queue
 from yolov5.models.common import DetectMultiBackend
 from yolov5.utils.torch_utils import select_device
 from yolov5.utils.general import non_max_suppression
@@ -37,9 +39,12 @@ TARGET_ID = 1
 FPS_LOCK = 60
 SHOW_DEBUG_WINDOW = False
 SETTINGS_FILE = "settings.json"
+model_lock = threading.Lock()
+play_button_lock = threading.Lock()
 
 DELAY_BETWEEN_CLICKS = 0
 DELAY_BEFORE_CLICK = 0
+AUTO_PLAY = False
 
 click_counters = {}
 
@@ -208,7 +213,7 @@ def bring_window_to_foreground(console, window):
         console.log(Text(f"Error: {e}", style="red"), highlight=True)
 
 def load_settings():
-    global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, FPS_LOCK
+    global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, FPS_LOCK, AUTO_PLAY
     settings_file = SETTINGS_FILE
 
     if not os.path.exists(settings_file):
@@ -221,6 +226,7 @@ def load_settings():
             DELAY_BETWEEN_CLICKS = settings.get("DELAY_BETWEEN_CLICKS", DELAY_BETWEEN_CLICKS)
             DELAY_BEFORE_CLICK = settings.get("DELAY_BEFORE_CLICK", DELAY_BEFORE_CLICK)
             FPS_LOCK = settings.get("FPS_LOCK", FPS_LOCK)
+            AUTO_PLAY = settings.get("AUTO_PLAY", AUTO_PLAY)
             print("Settings loaded successfully.")
     except json.JSONDecodeError:
         print("Error: JSON file is empty or invalid. Using default settings.")
@@ -232,12 +238,13 @@ def save_settings():
         "DELAY_BETWEEN_CLICKS": DELAY_BETWEEN_CLICKS,
         "DELAY_BEFORE_CLICK": DELAY_BEFORE_CLICK,
         "FPS_LOCK": FPS_LOCK,
+        "AUTO_PLAY": AUTO_PLAY
     }
     with open(SETTINGS_FILE, "w") as file:
         json.dump(settings, file, indent=4)
 
 def show_settings_panel(console):
-    global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, FPS_LOCK, SETTINGS_SIGNAL
+    global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, FPS_LOCK, AUTO_PLAY, SETTINGS_SIGNAL
     settings_window = tk.Tk()
     settings_window.title("Settings")
 
@@ -259,15 +266,20 @@ def show_settings_panel(console):
     fps_lock_entry = tk.Entry(settings_window, **dark_style)
     fps_lock_entry.insert(0, str(FPS_LOCK))
     fps_lock_entry.pack()
+    
+    tk.Label(settings_window, text="Auto Play:", **dark_style).pack()
+    auto_play_var = tk.BooleanVar(value=AUTO_PLAY)
+    tk.Checkbutton(settings_window, variable=auto_play_var, **dark_style).pack()
 
     settings_window.attributes('-topmost', True)
 
     def save_and_close():
-        global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, FPS_LOCK, SETTINGS_SIGNAL
+        global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, FPS_LOCK, AUTO_PLAY, SETTINGS_SIGNAL
         try:
             DELAY_BETWEEN_CLICKS = float(delay_between_clicks_entry.get())
             DELAY_BEFORE_CLICK = float(delay_before_click_entry.get())
             FPS_LOCK = int(fps_lock_entry.get())
+            AUTO_PLAY = auto_play_var.get()
             save_settings()
             console.log(Text("Settings updated!", style="green"), highlight=True)
         except ValueError:
@@ -280,8 +292,23 @@ def show_settings_panel(console):
     settings_window.protocol("WM_DELETE_WINDOW", save_and_close)
     settings_window.mainloop()
 
+def detect_play_button(console, screenshot, bbox, results_queue):
+    reader = easyocr.Reader(['en'])
+    result = reader.readtext(screenshot)
+    
+    for (bbox, text, prob) in result:
+        if "Play" in text:
+            (top_left, top_right, bottom_right, bottom_left) = bbox
+            top_left = (int(top_left[0]), int(top_left[1]))
+            bottom_right = (int(bottom_right[0]), int(bottom_right[1]))
+            x, y, w, h = top_left[0], top_left[1], bottom_right[0] - top_left[0], bottom_right[1] - top_left[1]
+            console.log(Text(f"'Play' detected at ({x, y, w, h})", style="green"), highlight=True)
+            results_queue.put((x + w // 2, y + h // 2))
+            return
+    results_queue.put(None)
+
 def main():
-    global STOP_SIGNAL, SETTINGS_SIGNAL, FPS_LOCK
+    global STOP_SIGNAL, SETTINGS_SIGNAL, FPS_LOCK, LAST_DETECTION, AUTO_PLAY
     last_click_info = None
 
     load_settings()
@@ -309,6 +336,9 @@ def main():
     last_frame_time = time.time()
 
     with Live(console=console, refresh_per_second=FPS_LOCK) as live:
+        results_queue = queue.Queue()
+        ocr_thread = None
+        
         while not STOP_SIGNAL:
             if SETTINGS_SIGNAL:
                 show_settings_panel(console)
@@ -322,12 +352,26 @@ def main():
             if frame_count % FRAME_SKIP == 0:
                 preprocessed_frame = preprocess_image(screenshot, device)
 
-                with torch.no_grad():
-                    prediction = model(preprocessed_frame, augment=False, visualize=False)[0]
+                with model_lock:
+                    with torch.no_grad():
+                        prediction = model(preprocessed_frame, augment=False, visualize=False)[0]
 
-                predictions = non_max_suppression(prediction, conf_thres=CONFIDENCE_THRESHOLD, iou_thres=IOU_THRESHOLD, agnostic=False)
+                    predictions = non_max_suppression(prediction, conf_thres=CONFIDENCE_THRESHOLD, iou_thres=IOU_THRESHOLD, agnostic=False)
             else:
                 predictions = []
+
+            if AUTO_PLAY and (ocr_thread is None or not ocr_thread.is_alive()):
+                ocr_thread = threading.Thread(target=detect_play_button, args=(console, screenshot, bbox, results_queue))
+                ocr_thread.start()
+
+            try:
+                play_button_coords = results_queue.get_nowait()
+                if play_button_coords:
+                    x, y = play_button_coords
+                    perform_click(console, x + bbox["left"], y + bbox["top"])
+                    time.sleep(DELAY_BETWEEN_CLICKS)
+            except queue.Empty:
+                pass
 
             if predictions and predictions[0] is not None:
                 for det in predictions[0]:
@@ -350,7 +394,7 @@ def main():
                         time.sleep(DELAY_BEFORE_CLICK)
                         last_click_info = perform_click(console, (x1 + x2) // 2, (y1 + y2) // 2)
                         time.sleep(DELAY_BETWEEN_CLICKS)
-                        
+
                         cv2.rectangle(screenshot, (x1, y1), (x2, y2), (0, 255, 0), 2)
                         cv2.putText(screenshot, f'{class_id}: {score:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
