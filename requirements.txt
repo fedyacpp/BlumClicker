@@ -8,7 +8,4 @@ pywin32
 mss
 torch
 rich
-<<<<<<< HEAD
 easyocr
-=======
->>>>>>> 42bfb89b43f95c362c9dc1fc1f6af812fe9fe0ef
