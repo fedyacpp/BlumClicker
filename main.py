@@ -16,9 +16,8 @@ import tkinter as tk
 import json
 import easyocr
 import queue
-from yolov5.models.common import DetectMultiBackend
-from yolov5.utils.torch_utils import select_device
-from yolov5.utils.general import non_max_suppression
+import logging
+from ultralytics import YOLO
 from rich.layout import Layout
 from rich.panel import Panel
 from rich.console import Console
@@ -47,6 +46,9 @@ DELAY_BEFORE_CLICK = 0
 AUTO_PLAY = False
 
 click_counters = {}
+
+logging.basicConfig(level=logging.INFO)
+logging.getLogger('ultralytics').setLevel(logging.CRITICAL)
 
 class MessagesPanel(Panel):
     def __init__(self, *args, **kwargs):
@@ -81,20 +83,15 @@ def load_model(console):
     model_path = Prompt.ask(Text("Path to model weights file", style="bold magenta"), default=default_model_path)
     with Progress() as progress:
         task = progress.add_task("[cyan]Loading...", total=100)
-        device = select_device("cuda:0" if torch.cuda.is_available() else "cpu")
-        model = DetectMultiBackend(model_path, device=device)
-        model = model.to(device)
-        model.warmup(imgsz=(1, 3, 416, 416))
+        model = YOLO(model_path)
         progress.update(task, advance=100)
     console.log(Text("Model loaded!", style="green"), highlight=True)
-    return model, device
+    return model
 
-def preprocess_image(image, device):
-    image = cv2.resize(image, (416, 416))
+def preprocess_image(image):
+    image = cv2.resize(image, (640, 640))
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image = image.transpose(2, 0, 1)
-    image = np.ascontiguousarray(image)
-    return torch.from_numpy(image).float().div(255.0).unsqueeze(0).to(device)
+    return image
 
 def find_telegram_window(console, title_keyword=WINDOW_TITLE):
     console.log(Text(f"Searching for window '{title_keyword}'...", style="blue"), highlight=True)
@@ -316,7 +313,8 @@ def main():
     messages_panel = MessagesPanel("", title="Messages", border_style="blue")
     console = CustomConsole(messages_panel=messages_panel)
     console.log(Text("Starting...", style="blue"), highlight=True)
-    model, device = load_model(console)
+    model = load_model(console)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     window = find_telegram_window(console)
     if not window:
         console.log("[red]Telegram window not found. Exiting...[/red]")
@@ -347,21 +345,20 @@ def main():
                 continue
 
             start_time = time.time()
-            screenshot, bbox = next(capture_gen)
+            image, bbox = next(capture_gen)
 
             if frame_count % FRAME_SKIP == 0:
-                preprocessed_frame = preprocess_image(screenshot, device)
+                preprocessed_frame = preprocess_image(image)
 
                 with model_lock:
                     with torch.no_grad():
-                        prediction = model(preprocessed_frame, augment=False, visualize=False)[0]
+                        prediction = model(preprocessed_frame, augment=False, visualize=False)
 
-                    predictions = non_max_suppression(prediction, conf_thres=CONFIDENCE_THRESHOLD, iou_thres=IOU_THRESHOLD, agnostic=False)
             else:
-                predictions = []
+                prediction = []
 
             if AUTO_PLAY and (ocr_thread is None or not ocr_thread.is_alive()):
-                ocr_thread = threading.Thread(target=detect_play_button, args=(console, screenshot, bbox, results_queue))
+                ocr_thread = threading.Thread(target=detect_play_button, args=(console, image, bbox, results_queue))
                 ocr_thread.start()
 
             try:
@@ -373,30 +370,35 @@ def main():
             except queue.Empty:
                 pass
 
-            if predictions and predictions[0] is not None:
-                for det in predictions[0]:
-                    xyxy = det[:4].tolist()
-                    score = det[4].item()
-                    class_id = int(det[5].item())
+            if prediction:
+                det = prediction[0]
+                if det.boxes is not None:
+                    boxes = det.boxes.xyxy.cpu().numpy()
+                    scores = det.boxes.conf.cpu().numpy()
+                    class_ids = det.boxes.cls.cpu().numpy().astype(int)
 
-                    if score > CONFIDENCE_THRESHOLD and class_id == TARGET_ID:
-                        x1, y1, x2, y2 = map(int, xyxy)
-                        width_scale = bbox["width"] / 416
-                        height_scale = bbox["height"] / 416
-                        x1, y1, x2, y2 = int(x1 * width_scale), int(y1 * height_scale), int(x2 * width_scale), int(y2 * height_scale)
+                    for i, box in enumerate(boxes):
+                        score = scores[i]
+                        class_id = class_ids[i]
 
-                        x1, y1, x2, y2 = x1 + bbox["left"], y1 + bbox["top"], x2 + bbox["left"], y2 + bbox["top"]
+                        if score > CONFIDENCE_THRESHOLD and class_id == TARGET_ID:
+                            x1, y1, x2, y2 = map(int, box)
+                            width_scale = bbox["width"] / 640
+                            height_scale = bbox["height"] / 640
+                            x1, y1, x2, y2 = int(x1 * width_scale), int(y1 * height_scale), int(x2 * width_scale), int(y2 * height_scale)
 
-                        click_key = (x1, y1, x2, y2)
-                        if click_key not in click_counters:
-                            click_counters[click_key] = 0
+                            x1, y1, x2, y2 = x1 + bbox["left"], y1 + bbox["top"], x2 + bbox["left"], y2 + bbox["top"]
 
-                        time.sleep(DELAY_BEFORE_CLICK)
-                        last_click_info = perform_click(console, (x1 + x2) // 2, (y1 + y2) // 2)
-                        time.sleep(DELAY_BETWEEN_CLICKS)
+                            click_key = (x1, y1, x2, y2)
+                            if click_key not in click_counters:
+                                click_counters[click_key] = 0
 
-                        cv2.rectangle(screenshot, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                        cv2.putText(screenshot, f'{class_id}: {score:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+                            time.sleep(DELAY_BEFORE_CLICK)
+                            last_click_info = perform_click(console, (x1 + x2) // 2, (y1 + y2) // 2)
+                            time.sleep(DELAY_BETWEEN_CLICKS)
+
+                            cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                            cv2.putText(image, f'{class_id}: {score:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
             current_time = time.time()
             elapsed_time = current_time - last_frame_time
