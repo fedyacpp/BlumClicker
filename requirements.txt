@@ -5,7 +5,6 @@ psutil
 keyboard
 pywin32
 mss
-torch
 rich
 easyocr
 ultralytics
