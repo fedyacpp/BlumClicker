@@ -9,3 +9,4 @@ mss
 torch
 rich
 easyocr
+ultralytics
