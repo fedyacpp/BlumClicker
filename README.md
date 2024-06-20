@@ -2,7 +2,7 @@
 
 **6/20/2024: YOLOv8 update, redownload weights!**
 
-**6/7/2024: Yeah, another link update. If you're experiencing fps drops, please, let me know!**
+~**6/7/2024: Yeah, another link update. If you're experiencing fps drops, please, let me know!**~
 
 ~**Important: The model weights download link has been updated. Please re-download the weights file even if you have downloaded it before.**~
 
