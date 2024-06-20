@@ -1,5 +1,4 @@
 opencv-python
-yolov5
 numpy
 pygetwindow
 psutil
