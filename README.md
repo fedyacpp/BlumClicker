@@ -1,22 +1,26 @@
-## BlumClicker
+# BlumClicker
 
-**6/20/2024: YOLOv8 update, redownload weights!**
+## Latest Update: June 20, 2024 - YOLOv8 Upgrade
+Please redownload the model weights!
 
-~**6/7/2024: Yeah, another link update. If you're experiencing fps drops, please, let me know!**~
+BlumClicker is an automation tool designed to interact with Telegram's Blum's Drop Game using YOLOv8-based image detection. It can achieve near-perfect accuracy in identifying and clicking on snowflakes. [Watch it in action](https://photos.app.goo.gl/TYiW38Hc1g3Qqbnu5).
 
-~**Important: The model weights download link has been updated. Please re-download the weights file even if you have downloaded it before.**~
+*Русская версия README доступна [здесь](https://github.com/fedyacpp/BlumClicker/blob/main/README_ru.md).*
 
-Achieve ~100% accuracy [watch here](https://photos.app.goo.gl/TYiW38Hc1g3Qqbnu5).
+## System Requirements
 
-*Русский README [здесь](https://github.com/fedyacpp/BlumClicker/blob/main/README_ru.md).*
+- **Recommended:** NVIDIA GPU (RTX series) for optimal performance
+- **Alternative:** CPU (slower and less accurate)
 
-BlumClicker automates interactions with Telegram using image-based object detection via YOLOv5. It's designed to spot snowflakes in Blum's Drop Game.
+**Note:** This script requires the desktop version of Telegram.
 
-## Requirements
+## Quick Start Guide
 
-* **NVIDIA GPU (Recommended):** From any other GPUs, this script will work only with an NVIDIA RTX series. YOLOv5 relies heavily on CUDA cores.
-* **CPU (Alternative):** You can run the script on a CPU if you don't have an NVIDIA GPU, but expect it to be much slower and less accurate.
+1. **Install CUDA Toolkit** (for NVIDIA GPUs):
+   - Download from [NVIDIA's CUDA Toolkit page](https://developer.nvidia.com/cuda-downloads)
+   - Follow the installation instructions for your OS
 
+<<<<<<< HEAD
 **Note:** You need the desktop version of Telegram for this script to work.
 
 ## TODO
@@ -45,61 +49,69 @@ You'll need Python 3.x and CUDA for GPU support. Tested with Python 3.10 and CUD
    - Download, run the installer, and follow the setup steps.
 
 2. **Clone the Repo:**
+=======
+2. **Clone the repository:**
+>>>>>>> 86a432cdb004d9861731d50556209283d4d94f2d
    ```bash
    git clone https://github.com/fedyacpp/BlumClicker
    cd BlumClicker
    ```
 
-3. **Install PyTorch with CUDA support:**
+3. **Install dependencies:**
+   - For GPU users:
+     ```bash
+     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+     pip install -r requirements.txt
+     ```
+   - For CPU users:
+     ```bash
+     pip install torch torchvision torchaudio
+     pip install -r requirements.txt
+     ```
+
+4. **Download model weights:**
+   - Get `best.pt` from [this link](https://drive.google.com/file/d/1lUTl4GulseoWs_vhPnYp0qkIYaumKMNg/view?usp=sharing)
+   - Place it in the script directory
+
+5. **Verify CUDA installation** (GPU users):
    ```bash
-   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+   python isCudaAvailable.py
    ```
 
-   If you're using a CPU (much slower image processing):
+6. **Run the script:**
    ```bash
-   pip install torch torchvision torchaudio
+   python main.py
    ```
 
-4. **Install the remaining dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Usage
 
-5. **Download the model weights:**
-   - Get the weights from this [link](https://drive.google.com/file/d/1lUTl4GulseoWs_vhPnYp0qkIYaumKMNg/view?usp=sharing).
-   - Place the `best.pt` file in the same directory as the script, or specify its path when running the script.
-
-### Check CUDA Installation (for NVIDIA GPU users)
-
-To verify CUDA installation, run the `isCudaAvailable.py` script in the repo:
-
-```bash
-python isCudaAvailable.py
-```
-
-If everything's set up right, you'll see your CUDA and GPU info.
-
-### Running the Script
-
-Ensure the Blum window is open in your Telegram desktop app before running the script.
-
-To start the script, just run:
-```bash
-python main.py
-```
-
-## Exiting the Script
-
-To exit, press `CTRL+Q` twice.
+- Ensure the Blum game window is open in Telegram desktop before running the script
+- To exit, press `CTRL+Q` twice
 
 ## Features
 
-- **Telegram Window Search:** Finds an open Telegram window on your desktop.
-- **Object Detection:** Uses YOLOv5 to detect objects in the Telegram window.
-- **Automated Clicking:** Clicks on detected objects.
+- Automatic Telegram window detection
+- YOLOv8-powered object recognition
+- Automated clicking on detected snowflakes
+
+## Roadmap
+
+- [x] Improved documentation
+- [x] Enhanced terminal output
+- [x] User-friendly script interface
+- [x] Advanced model training
+- [x] Customizable settings (delays, etc.)
+- [x] Expanded dataset
+- [x] Auto-replay functionality
+- [x] Comprehensive documentation
+- [ ] Debug window with predictions
+- [ ] FPS limiting
+- [ ] Click probability adjustment
 
 ## Troubleshooting
 
-If you run into issues, double-check your CUDA installation and library versions. Pay attention to error messages in the console and logs.
+If you encounter issues:
+1. Verify your CUDA installation and library versions
+2. Check console and log outputs for error messages
 
-Need help? Open an issue or message me on [Discord](https://discord.com/users/fedyacpp)/[Telegram](t.me/fedyacpp).
+For further assistance, open an issue or contact me on [Discord](https://discord.com/users/fedyacpp) or [Telegram](t.me/fedyacpp).
