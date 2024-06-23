@@ -20,7 +20,6 @@ BlumClicker is an automation tool designed to interact with Telegram's Blum's Dr
    - Download from [NVIDIA's CUDA Toolkit page](https://developer.nvidia.com/cuda-downloads)
    - Follow the installation instructions for your OS
 
-<<<<<<< HEAD
 **Note:** You need the desktop version of Telegram for this script to work.
 
 ## TODO
@@ -49,9 +48,6 @@ You'll need Python 3.x and CUDA for GPU support. Tested with Python 3.10 and CUD
    - Download, run the installer, and follow the setup steps.
 
 2. **Clone the Repo:**
-=======
-2. **Clone the repository:**
->>>>>>> 86a432cdb004d9861731d50556209283d4d94f2d
    ```bash
    git clone https://github.com/fedyacpp/BlumClicker
    cd BlumClicker
