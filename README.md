@@ -28,10 +28,10 @@ BlumClicker automates interactions with Telegram using image-based object detect
 - [x] Add settings (e.g., custom delay between/before clicks)
 - [x] Collect even more photos in dataset
 - [x] Auto play again
-- [ ] Add Debug window with predicts
-- [ ] Add fps lock
+- [x] Add Debug window with predicts
+- [x] Add fps lock
 - [ ] Add click probability
-- [ ] Add even MORE info in readme
+- [x] Add even MORE info in readme
 
 ## Installation
 
