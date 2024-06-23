@@ -90,20 +90,6 @@ You'll need Python 3.x and CUDA for GPU support. Tested with Python 3.10 and CUD
 - YOLOv8-powered object recognition
 - Automated clicking on detected snowflakes
 
-## Roadmap
-
-- [x] Improved documentation
-- [x] Enhanced terminal output
-- [x] User-friendly script interface
-- [x] Advanced model training
-- [x] Customizable settings (delays, etc.)
-- [x] Expanded dataset
-- [x] Auto-replay functionality
-- [x] Comprehensive documentation
-- [ ] Debug window with predictions
-- [ ] FPS limiting
-- [ ] Click probability adjustment
-
 ## Troubleshooting
 
 If you encounter issues:
