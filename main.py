@@ -28,7 +28,7 @@ from rich.prompt import Prompt
 from tkinter import filedialog
 from tkinter import ttk
 
-CONFIDENCE_THRESHOLD = 0.8
+CONFIDENCE_THRESHOLD = 0.6
 IOU_THRESHOLD = 0.5
 WINDOW_TITLE = "Telegram"
 FRAME_SKIP = 1
