@@ -1,6 +1,6 @@
 # BlumClicker
 
-## Dev info: as for July 4 blum got collab with some people and changed everything including freeze, point and bomb sprites, so tomorrow I'll retrain model and upload new weights
+## Dev info: currently collecting new dataset
 
 ## Latest Update: June 20, 2024 - YOLOv8 Upgrade
 Please redownload the model weights!
