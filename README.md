@@ -1,6 +1,6 @@
 # BlumClicker
 
-## Dev info: currently collecting new dataset
+## Dev info: because of drop game currently not working im not updating weights as i cant 100 percent be sure that it works as needed
 
 ## Latest Update: June 20, 2024 - YOLOv8 Upgrade
 Please redownload the model weights!

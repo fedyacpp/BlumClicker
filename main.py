@@ -44,8 +44,8 @@ SHOW_DEBUG_WINDOW = False
 DELAY_BETWEEN_CLICKS = 0
 DELAY_BEFORE_CLICK = 0
 AUTO_PLAY = False
-SHOW_DEBUG_WINDOW = False
 MODEL_PATH = ""
+CLICK_ALL_BOMBS = False 
 
 model_lock = threading.Lock()
 play_button_lock = threading.Lock()
@@ -191,7 +191,7 @@ def bring_window_to_foreground(console, window):
         console.log(Text(f"Error: {e}", style="red"), highlight=True)
 
 def load_settings():
-    global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, FPS_LOCK, AUTO_PLAY, MODEL_PATH, SHOW_DEBUG_WINDOW
+    global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, FPS_LOCK, AUTO_PLAY, MODEL_PATH, SHOW_DEBUG_WINDOW, CLICK_ALL_BOMBS
     if not os.path.exists(SETTINGS_FILE):
         print("Settings file does not exist. Using default settings.")
         return
@@ -205,6 +205,7 @@ def load_settings():
             AUTO_PLAY = settings.get("AUTO_PLAY", AUTO_PLAY)
             MODEL_PATH = settings.get("MODEL_PATH", MODEL_PATH)
             SHOW_DEBUG_WINDOW = settings.get("SHOW_DEBUG_WINDOW", SHOW_DEBUG_WINDOW)
+            CLICK_ALL_BOMBS = settings.get("CLICK_ALL_BOMBS", CLICK_ALL_BOMBS)
             print("Settings loaded successfully.")
     except json.JSONDecodeError:
         print("Error: JSON file is empty or invalid. Using default settings.")
@@ -218,86 +219,75 @@ def save_settings():
         "FPS_LOCK": FPS_LOCK,
         "AUTO_PLAY": AUTO_PLAY,
         "MODEL_PATH": MODEL_PATH,
-        "SHOW_DEBUG_WINDOW": SHOW_DEBUG_WINDOW
+        "SHOW_DEBUG_WINDOW": SHOW_DEBUG_WINDOW,
+        "CLICK_ALL_BOMBS": CLICK_ALL_BOMBS
     }
     with open(SETTINGS_FILE, "w") as file:
         json.dump(settings, file, indent=4)
 
 def show_settings_panel(console):
-    global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, FPS_LOCK, AUTO_PLAY, MODEL_PATH, SHOW_DEBUG_WINDOW, SETTINGS_SIGNAL
-    
+    global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, FPS_LOCK, AUTO_PLAY, MODEL_PATH, SHOW_DEBUG_WINDOW, CLICK_ALL_BOMBS, SETTINGS_SIGNAL
+
+    def create_settings_window():
+        settings_window = tk.Toplevel()
+        settings_window.title("Settings")
+        settings_window.geometry("600x450")
+        settings_window.configure(bg='#2E3B4E')
+        settings_window.attributes('-topmost', True)
+        return settings_window
+
+    def setup_styles():
+        style = ttk.Style()
+        style.theme_use('clam')
+        style.configure("TLabel", foreground="white", background="#2E3B4E", font=('Arial', 10))
+        style.configure("TEntry", fieldbackground="#4A5B70", foreground="white", font=('Arial', 10))
+        style.configure("TButton", background="#4A5B70", foreground="white", font=('Arial', 10))
+        style.map("TButton", background=[('active', '#5A6B80')])
+        style.configure("TCheckbutton", foreground="white", background="#2E3B4E", font=('Arial', 10))
+        style.map("TCheckbutton", background=[('active', '#3E4B5E')])
+
+    def create_main_frame(settings_window):
+        main_frame = ttk.Frame(settings_window, padding="20", style="TLabel")
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        main_frame.columnconfigure(1, weight=1)
+        return main_frame
+
+    def create_entry(main_frame, row, text, value):
+        ttk.Label(main_frame, text=text).grid(row=row, column=0, sticky="w", pady=10)
+        entry = ttk.Entry(main_frame)
+        entry.insert(0, str(value))
+        entry.grid(row=row, column=1, sticky="ew", pady=10, padx=(10, 0))
+        return entry
+
+    def create_checkbox(main_frame, row, text, value):
+        ttk.Label(main_frame, text=text).grid(row=row, column=0, sticky="w", pady=10)
+        var = tk.BooleanVar(value=value)
+        ttk.Checkbutton(main_frame, variable=var).grid(row=row, column=1, sticky="w", pady=10, padx=(10, 0))
+        return var
+
     def browse_file():
         filename = filedialog.askopenfilename(filetypes=[("PT files", "*.pt")])
         if filename:
             model_path_entry.delete(0, tk.END)
             model_path_entry.insert(0, filename)
 
-    settings_window = tk.Tk()
-    settings_window.title("Settings")
-    settings_window.geometry("600x400")
-    settings_window.configure(bg='#2E3B4E')
-
-    style = ttk.Style()
-    style.theme_use('clam')
-    style.configure("TLabel", foreground="white", background="#2E3B4E", font=('Arial', 10))
-    style.configure("TEntry", fieldbackground="#4A5B70", foreground="white", font=('Arial', 10))
-    style.configure("TButton", background="#4A5B70", foreground="white", font=('Arial', 10))
-    style.map("TButton", background=[('active', '#5A6B80')])
-    style.configure("TCheckbutton", foreground="white", background="#2E3B4E", font=('Arial', 10))
-    style.map("TCheckbutton", background=[('active', '#3E4B5E')])
-
-    main_frame = ttk.Frame(settings_window, padding="20", style="TLabel")
-    main_frame.pack(fill=tk.BOTH, expand=True)
-
-    main_frame.columnconfigure(1, weight=1)
-
-    ttk.Label(main_frame, text="Delay Between Clicks (seconds):").grid(row=0, column=0, sticky="w", pady=10)
-    delay_between_clicks_entry = ttk.Entry(main_frame)
-    delay_between_clicks_entry.insert(0, str(DELAY_BETWEEN_CLICKS))
-    delay_between_clicks_entry.grid(row=0, column=1, sticky="ew", pady=10, padx=(10, 0))
-
-    ttk.Label(main_frame, text="Delay Before Click (seconds):").grid(row=1, column=0, sticky="w", pady=10)
-    delay_before_click_entry = ttk.Entry(main_frame)
-    delay_before_click_entry.insert(0, str(DELAY_BEFORE_CLICK))
-    delay_before_click_entry.grid(row=1, column=1, sticky="ew", pady=10, padx=(10, 0))
-
-    ttk.Label(main_frame, text="FPS Lock:").grid(row=2, column=0, sticky="w", pady=10)
-    fps_lock_entry = ttk.Entry(main_frame)
-    fps_lock_entry.insert(0, str(FPS_LOCK))
-    fps_lock_entry.grid(row=2, column=1, sticky="ew", pady=10, padx=(10, 0))
-
-    ttk.Label(main_frame, text="Auto Play:").grid(row=3, column=0, sticky="w", pady=10)
-    auto_play_var = tk.BooleanVar(value=AUTO_PLAY)
-    ttk.Checkbutton(main_frame, variable=auto_play_var).grid(row=3, column=1, sticky="w", pady=10, padx=(10, 0))
-
-    ttk.Label(main_frame, text="Show Debug Window:").grid(row=5, column=0, sticky="w", pady=10)
-    show_debug_window_var = tk.BooleanVar(value=SHOW_DEBUG_WINDOW)
-    ttk.Checkbutton(main_frame, variable=show_debug_window_var).grid(row=5, column=1, sticky="w", pady=10, padx=(10, 0))
-
-    ttk.Label(main_frame, text="Model Path:").grid(row=4, column=0, sticky="w", pady=10)
-    model_path_entry = ttk.Entry(main_frame)
-    model_path_entry.insert(0, MODEL_PATH)
-    model_path_entry.grid(row=4, column=1, sticky="ew", pady=10, padx=(10, 0))
-    ttk.Button(main_frame, text="Browse", command=browse_file).grid(row=4, column=2, pady=10, padx=(10, 0))
-
-    settings_window.attributes('-topmost', True)
-
     def save_and_close():
-            global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, FPS_LOCK, AUTO_PLAY, MODEL_PATH, SHOW_DEBUG_WINDOW, SETTINGS_SIGNAL
-            try:
-                DELAY_BETWEEN_CLICKS = float(delay_between_clicks_entry.get())
-                DELAY_BEFORE_CLICK = float(delay_before_click_entry.get())
-                FPS_LOCK = int(fps_lock_entry.get())
-                AUTO_PLAY = auto_play_var.get()
-                MODEL_PATH = model_path_entry.get()
-                SHOW_DEBUG_WINDOW = show_debug_window_var.get()
-                save_settings()
-                console.log(Text("Settings updated!", style="green"), highlight=True)
-            except ValueError:
-                console.log(Text("Error: Invalid input. Please enter valid numbers.", style="red"), highlight=True)
+        global DELAY_BETWEEN_CLICKS, DELAY_BEFORE_CLICK, FPS_LOCK, AUTO_PLAY, MODEL_PATH, SHOW_DEBUG_WINDOW, CLICK_ALL_BOMBS, SETTINGS_SIGNAL
+        try:
+            DELAY_BETWEEN_CLICKS = float(delay_between_clicks_entry.get())
+            DELAY_BEFORE_CLICK = float(delay_before_click_entry.get())
+            FPS_LOCK = int(fps_lock_entry.get())
+            AUTO_PLAY = auto_play_var.get()
+            MODEL_PATH = model_path_entry.get()
+            SHOW_DEBUG_WINDOW = show_debug_window_var.get()
+            CLICK_ALL_BOMBS = click_all_bombs_var.get()
+            save_settings()
+            console.log(Text("Settings updated!", style="green"), highlight=True)
+        except ValueError:
+            console.log(Text("Error: Invalid input. Please enter valid numbers.", style="red"), highlight=True)
 
-            settings_window.destroy()
-            SETTINGS_SIGNAL = False
+        settings_window.destroy()
+        SETTINGS_SIGNAL = False
 
     def cancel_and_close():
         global SETTINGS_SIGNAL
@@ -305,14 +295,43 @@ def show_settings_panel(console):
         SETTINGS_SIGNAL = False
         console.log(Text("Settings unchanged.", style="yellow"), highlight=True)
 
+    settings_window = create_settings_window()
+    setup_styles()
+    main_frame = create_main_frame(settings_window)
+
+    delay_between_clicks_entry = create_entry(main_frame, 0, "Delay Between Clicks (seconds):", DELAY_BETWEEN_CLICKS)
+    delay_before_click_entry = create_entry(main_frame, 1, "Delay Before Click (seconds):", DELAY_BEFORE_CLICK)
+    fps_lock_entry = create_entry(main_frame, 2, "FPS Lock:", FPS_LOCK)
+    auto_play_var = create_checkbox(main_frame, 3, "Auto Play:", AUTO_PLAY)
+    show_debug_window_var = create_checkbox(main_frame, 4, "Show Debug Window:", SHOW_DEBUG_WINDOW)
+    click_all_bombs_var = create_checkbox(main_frame, 5, "Click All Bombs:", CLICK_ALL_BOMBS)
+
+    ttk.Label(main_frame, text="Model Path:").grid(row=6, column=0, sticky="w", pady=10)
+    model_path_entry = ttk.Entry(main_frame)
+    model_path_entry.insert(0, MODEL_PATH)
+    model_path_entry.grid(row=6, column=1, sticky="ew", pady=10, padx=(10, 0))
+    ttk.Button(main_frame, text="Browse", command=browse_file).grid(row=6, column=2, pady=10, padx=(10, 0))
+
     button_frame = ttk.Frame(main_frame, style="TLabel")
-    button_frame.grid(row=6, column=0, columnspan=3, pady=20)
+    button_frame.grid(row=7, column=0, columnspan=3, pady=20)
 
     ttk.Button(button_frame, text="Save", command=save_and_close).pack(side=tk.LEFT, padx=(0, 10))
     ttk.Button(button_frame, text="Cancel", command=cancel_and_close).pack(side=tk.LEFT)
 
     settings_window.protocol("WM_DELETE_WINDOW", cancel_and_close)
-    settings_window.mainloop()
+    settings_window.grab_set()
+    settings_window.focus_set()
+    settings_window.wait_window()
+
+def update_debug_window(debug_image):
+    if SHOW_DEBUG_WINDOW:
+        cv2.imshow("Debug Window", debug_image)
+        hwnd = win32gui.FindWindow(None, "Debug Window")
+        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
+        cv2.waitKey(1)
+    else:
+        if cv2.getWindowProperty("Debug Window", cv2.WND_PROP_VISIBLE) >= 1:
+            cv2.destroyWindow("Debug Window")
 
 def load_model(console):
     global MODEL_PATH
@@ -342,8 +361,18 @@ def detect_play_button(console, screenshot, bbox, results_queue):
             return
     results_queue.put(None)
 
+def update_debug_window(debug_image):
+    if SHOW_DEBUG_WINDOW:
+        cv2.imshow("Debug Window", debug_image)
+        hwnd = win32gui.FindWindow(None, "Debug Window")
+        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
+        cv2.waitKey(1)
+    else:
+        if cv2.getWindowProperty("Debug Window", cv2.WND_PROP_VISIBLE) >= 1:
+            cv2.destroyWindow("Debug Window")
+
 def main():
-    global STOP_SIGNAL, SETTINGS_SIGNAL, FPS_LOCK, AUTO_PLAY, SHOW_DEBUG_WINDOW
+    global STOP_SIGNAL, SETTINGS_SIGNAL, FPS_LOCK, AUTO_PLAY, SHOW_DEBUG_WINDOW, CLICK_ALL_BOMBS
     last_click_info = None
 
     load_settings()
@@ -372,10 +401,6 @@ def main():
         while not STOP_SIGNAL:
             if SETTINGS_SIGNAL:
                 show_settings_panel(console)
-                save_settings()
-                if not SHOW_DEBUG_WINDOW and cv2.getWindowProperty("Debug Window", cv2.WND_PROP_VISIBLE) >= 1:
-                    cv2.destroyWindow("Debug Window")
-                SETTINGS_SIGNAL = False
                 continue
 
             start_time = time.time()
@@ -426,11 +451,13 @@ def main():
                             cv2.rectangle(debug_image, (x1, y1), (x2, y2), color, 2)
                             cv2.putText(debug_image, f'{class_id}: {score:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
 
-                            if class_id == TARGET_ID:
+                            if class_id == TARGET_ID or (CLICK_ALL_BOMBS and class_id == 0):
                                 x1, y1, x2, y2 = x1 + bbox["left"], y1 + bbox["top"], x2 + bbox["left"], y2 + bbox["top"]
                                 time.sleep(DELAY_BEFORE_CLICK)
                                 last_click_info = perform_click(console, (x1 + x2) // 2, (y1 + y2) // 2)
                                 time.sleep(DELAY_BETWEEN_CLICKS)
+
+                    update_debug_window(debug_image)
 
             current_time = time.time()
             elapsed_time = current_time - last_frame_time
