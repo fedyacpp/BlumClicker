@@ -3,7 +3,7 @@
 ## Latest Update: July 5, 2024 - Dataset update
 Please redownload the model weights!
 
-BlumClicker is an automation tool designed to interact with Telegram's Blum's Drop Game using YOLOv8-based image detection. It can achieve near-perfect accuracy in identifying and clicking on snowflakes. [Watch it in action](https://photos.app.goo.gl/TYiW38Hc1g3Qqbnu5).
+BlumClicker is an automation tool designed to interact with Telegram's Blum's Drop Game using YOLOv8-based image detection. It can achieve near-perfect accuracy in identifying and clicking on snowflakes. [Watch it in action](https://photos.app.goo.gl/TYiW38Hc1g3Qqbnu5) (old video).
 
 *Русская версия README доступна [здесь](https://github.com/fedyacpp/BlumClicker/blob/main/README_ru.md).*
 
