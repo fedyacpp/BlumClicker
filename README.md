@@ -1,6 +1,6 @@
 # BlumClicker
 
-## Latest Update: July 10, 2024 - Collab ended, so old dataset returned
+## Latest Update: July 10, 2024 - Collab ended, so old dataset returned and turn off Click on all bombs aif you had it on
 Please redownload the model weights!
 
 BlumClicker is an automation tool designed to interact with Telegram's Blum's Drop Game using YOLOv8-based image detection. It can achieve near-perfect accuracy in identifying and clicking on snowflakes. [Watch it in action](https://photos.app.goo.gl/TYiW38Hc1g3Qqbnu5) (old video).
