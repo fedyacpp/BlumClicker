@@ -5,5 +5,5 @@
     "AUTO_PLAY": true,
     "MODEL_PATH": "",
     "SHOW_DEBUG_WINDOW": false,
-    "CLICK_ALL_BOMBS": true
+    "CLICK_ALL_BOMBS": false
 }
