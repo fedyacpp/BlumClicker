@@ -29,7 +29,6 @@ from tkinter import filedialog
 from tkinter import ttk
 
 CONFIDENCE_THRESHOLD = 0.6
-IOU_THRESHOLD = 0.5
 WINDOW_TITLE = "Telegram"
 FRAME_SKIP = 1
 TARGET_ID = 1
@@ -371,6 +370,14 @@ def update_debug_window(debug_image):
         if cv2.getWindowProperty("Debug Window", cv2.WND_PROP_VISIBLE) >= 1:
             cv2.destroyWindow("Debug Window")
 
+def check_overlap(box1, box2):
+    x1, y1, x2, y2 = box1
+    x3, y3, x4, y4 = box2
+    
+    if y3 < y2 and x3 < x2 and x4 > x1:
+        return True
+    return False
+
 def main():
     global STOP_SIGNAL, SETTINGS_SIGNAL, FPS_LOCK, AUTO_PLAY, SHOW_DEBUG_WINDOW, CLICK_ALL_BOMBS
     last_click_info = None
@@ -436,8 +443,11 @@ def main():
                     class_ids = det.boxes.cls.cpu().numpy().astype(int)
 
                     debug_image = image.copy()
-
-                    for i, box in enumerate(boxes):
+                    
+                    sorted_indices = np.argsort(boxes[:, 1])
+                    
+                    for i in sorted_indices:
+                        box = boxes[i]
                         score = scores[i]
                         class_id = class_ids[i]
 
@@ -452,10 +462,13 @@ def main():
                             cv2.putText(debug_image, f'{class_id}: {score:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
 
                             if class_id == TARGET_ID or (CLICK_ALL_BOMBS and class_id == 0):
-                                x1, y1, x2, y2 = x1 + bbox["left"], y1 + bbox["top"], x2 + bbox["left"], y2 + bbox["top"]
-                                time.sleep(DELAY_BEFORE_CLICK)
-                                last_click_info = perform_click(console, (x1 + x2) // 2, (y1 + y2) // 2)
-                                time.sleep(DELAY_BETWEEN_CLICKS)
+                                overlapped = any(check_overlap(box, other_box) for other_box in boxes if not np.array_equal(box, other_box))
+                                
+                                if not overlapped:
+                                    x1, y1, x2, y2 = x1 + bbox["left"], y1 + bbox["top"], x2 + bbox["left"], y2 + bbox["top"]
+                                    time.sleep(DELAY_BEFORE_CLICK)
+                                    last_click_info = perform_click(console, (x1 + x2) // 2, (y1 + y2) // 2)
+                                    time.sleep(DELAY_BETWEEN_CLICKS)
 
                     update_debug_window(debug_image)
 
@@ -480,12 +493,8 @@ def main():
                 title="System Info",
                 border_style="green",
             )
-            if SHOW_DEBUG_WINDOW:
-                cv2.imshow("Debug Window", debug_image)
-                cv2.waitKey(1)
-            else:
-                if cv2.getWindowProperty("Debug Window", cv2.WND_PROP_VISIBLE) >= 1:
-                    cv2.destroyWindow("Debug Window")
+            
+            update_debug_window(debug_image)
 
             hotkeys_panel = Panel(Text("CTRL+Q - Exit\nCTRL+X - Pause/Resume\nCTRL+W - Settings"), title="Hotkeys", border_style="magenta")
 
