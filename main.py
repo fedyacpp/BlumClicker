@@ -4,7 +4,6 @@ import threading
 import queue
 import json
 import logging
-import tkinter as tk
 import cv2
 import numpy as np
 import torch
@@ -17,7 +16,7 @@ import win32con
 import keyboard
 import mss
 import easyocr
-from tkinter import filedialog, ttk
+from PyQt5 import QtWidgets
 from ultralytics import YOLO
 from rich.layout import Layout
 from rich.panel import Panel
@@ -29,7 +28,6 @@ from rich.prompt import Prompt
 
 
 class TelegramBot:
-
     CONFIDENCE_THRESHOLD = 0.6
     WINDOW_TITLE = "Telegram"
     FRAME_SKIP = 1
@@ -38,7 +36,6 @@ class TelegramBot:
 
     def __init__(self):
         self.stop_signal = False
-        self.ctrl_q_pressed_once = False
         self.pause_signal = False
         self.settings_signal = False
         self.fps_lock = 60
@@ -62,7 +59,6 @@ class TelegramBot:
         self.console = self.CustomConsole(messages_panel=self.messages_panel)
 
         self.load_settings()
-
         self.model = self.load_model()
 
         self.window = self.find_telegram_window()
@@ -70,8 +66,10 @@ class TelegramBot:
             self.console.log("[red]Telegram window not found. Exiting...[/red]")
             exit()
 
-    class MessagesPanel(Panel):
+        self.keyboard_thread = threading.Thread(target=self.check_keyboard, daemon=True)
+        self.keyboard_thread.start()
 
+    class MessagesPanel(Panel):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.max_lines = 15
@@ -82,7 +80,6 @@ class TelegramBot:
             self.renderable = Text.from_markup("\n".join(self.messages[-self.max_lines:]))
 
     class CustomConsole(Console):
-
         def __init__(self, *args, messages_panel=None, **kwargs):
             super().__init__(*args, **kwargs)
             self.messages_panel = messages_panel
@@ -103,12 +100,12 @@ class TelegramBot:
         return cv2.resize(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), (640, 640))
 
     def find_telegram_window(self):
-        self.console.log(Text(f"Searching for window '{self.WINDOW_TITLE}'...", style="blue"), highlight=True)
+        self.console.log(f"Searching for window '{self.WINDOW_TITLE}'...", style="blue")
         windows = gw.getWindowsWithTitle(self.WINDOW_TITLE)
         if not windows:
-            self.console.log(Text(f"Window '{self.WINDOW_TITLE}' not found", style="red"), highlight=True)
+            self.console.log(f"Window '{self.WINDOW_TITLE}' not found.", style="red")
             return None
-        self.console.log(Text(f"Window '{windows[0].title}' found!", style="green"), highlight=True)
+        self.console.log(f"Window '{windows[0].title}' found!", style="green")
         return windows[0]
 
     def capture_telegram_window(self):
@@ -142,23 +139,19 @@ class TelegramBot:
         return x, y, self.click_counters[click_key]
 
     def check_keyboard(self):
-        while True:
+        while not self.stop_signal:
             if keyboard.is_pressed("ctrl+q"):
-                if not self.ctrl_q_pressed_once:
-                    self.console.log(Text("CTRL+Q pressed. Press again to exit.", style="yellow"), highlight=True)
-                    self.ctrl_q_pressed_once = True
-                else:
-                    self.console.log(Text("Exiting...", style="green"), highlight=True)
-                    self.stop_signal = True
-                    break
+                self.console.log("CTRL+Q pressed. Exiting...", style="yellow")
+                self.stop_signal = True
+                break
             elif keyboard.is_pressed("ctrl+x"):
                 self.pause_signal = not self.pause_signal
                 status = "paused" if self.pause_signal else "resumed"
-                self.console.log(Text(f"Script {status}.", style="magenta"), highlight=True)
+                self.console.log(f"Script {status}.", style="magenta")
                 time.sleep(0.5)
             elif keyboard.is_pressed("ctrl+w"):
                 if not self.settings_signal:
-                    self.console.log(Text("Opening settings panel...", style="cyan"), highlight=True)
+                    self.console.log("Opening settings panel...", style="cyan")
                     self.settings_signal = True
             time.sleep(0.1)
 
@@ -166,7 +159,7 @@ class TelegramBot:
         cpu_usage = psutil.cpu_percent()
         mem = psutil.virtual_memory()
         mem_usage = mem.percent
-        mem_total = mem.total / (1024**3)
+        mem_total = mem.total / (1024 ** 3)
         try:
             if torch.cuda.is_available():
                 gpu = torch.cuda.get_device_properties(0)
@@ -202,9 +195,9 @@ class TelegramBot:
             if window_thread != current_thread:
                 win32process.AttachThreadInput(window_thread, current_thread, False)
 
-            self.console.log(Text(f"Window '{self.window.title}' brought to the foreground!", style="green"), highlight=True)
+            self.console.log(f"Window '{self.window.title}' brought to the foreground!", style="green")
         except Exception as e:
-            self.console.log(Text(f"Error: {e}", style="red"), highlight=True)
+            self.console.log(f"Error: {e}", style="red")
 
     def load_settings(self):
         if not os.path.exists(self.SETTINGS_FILE):
@@ -223,9 +216,9 @@ class TelegramBot:
                 self.click_all_bombs = settings.get("CLICK_ALL_BOMBS", self.click_all_bombs)
                 self.console.log("Settings loaded successfully.")
         except json.JSONDecodeError:
-            self.console.log("Error: JSON file is empty or invalid. Using default settings.")
+            self.console.log("Error: Invalid JSON file. Using default settings.", style="red")
         except Exception as e:
-            self.console.log(f"Unexpected error loading settings: {e}. Using default settings.")
+            self.console.log(f"Unexpected error loading settings: {e}. Using default settings.", style="red")
 
     def save_settings(self):
         settings = {
@@ -242,98 +235,98 @@ class TelegramBot:
 
     def show_settings_panel(self):
 
-        def create_settings_window():
-            settings_window = tk.Toplevel()
-            settings_window.title("Settings")
-            settings_window.geometry("600x450")
-            settings_window.configure(bg='#2E3B4E')
-            settings_window.attributes('-topmost', True)
-            return settings_window
+        class SettingsWindow(QtWidgets.QDialog):
+            def __init__(self, bot_instance, parent=None):
+                super().__init__(parent)
+                self.bot_instance = bot_instance
+                self.setWindowTitle("Settings")
+                self.setFixedSize(400, 400)
+                self.init_ui()
 
-        def setup_styles():
-            style = ttk.Style()
-            style.theme_use('clam')
-            style.configure("TLabel", foreground="white", background="#2E3B4E", font=('Arial', 10))
-            style.configure("TEntry", fieldbackground="#4A5B70", foreground="white", font=('Arial', 10))
-            style.configure("TButton", background="#4A5B70", foreground="white", font=('Arial', 10))
-            style.map("TButton", background=[('active', '#5A6B80')])
-            style.configure("TCheckbutton", foreground="white", background="#2E3B4E", font=('Arial', 10))
-            style.map("TCheckbutton", background=[('active', '#3E4B5E')])
+            def init_ui(self):
+                layout = QtWidgets.QVBoxLayout()
 
-        def create_main_frame(settings_window):
-            main_frame = ttk.Frame(settings_window, padding="20", style="TLabel")
-            main_frame.pack(fill=tk.BOTH, expand=True)
-            main_frame.columnconfigure(1, weight=1)
-            return main_frame
+                self.delay_between_clicks_label = QtWidgets.QLabel("Delay Between Clicks (seconds):")
+                self.delay_between_clicks_input = QtWidgets.QDoubleSpinBox()
+                self.delay_between_clicks_input.setRange(0, 10)
+                self.delay_between_clicks_input.setSingleStep(0.1)
+                self.delay_between_clicks_input.setValue(self.bot_instance.delay_between_clicks)
+                layout.addWidget(self.delay_between_clicks_label)
+                layout.addWidget(self.delay_between_clicks_input)
 
-        def create_entry(main_frame, row, text, value):
-            ttk.Label(main_frame, text=text).grid(row=row, column=0, sticky="w", pady=10)
-            entry = ttk.Entry(main_frame)
-            entry.insert(0, str(value))
-            entry.grid(row=row, column=1, sticky="ew", pady=10, padx=(10, 0))
-            return entry
+                self.delay_before_click_label = QtWidgets.QLabel("Delay Before Click (seconds):")
+                self.delay_before_click_input = QtWidgets.QDoubleSpinBox()
+                self.delay_before_click_input.setRange(0, 10)
+                self.delay_before_click_input.setSingleStep(0.1)
+                self.delay_before_click_input.setValue(self.bot_instance.delay_before_click)
+                layout.addWidget(self.delay_before_click_label)
+                layout.addWidget(self.delay_before_click_input)
 
-        def create_checkbox(main_frame, row, text, value):
-            ttk.Label(main_frame, text=text).grid(row=row, column=0, sticky="w", pady=10)
-            var = tk.BooleanVar(value=value)
-            ttk.Checkbutton(main_frame, variable=var).grid(row=row, column=1, sticky="w", pady=10, padx=(10, 0))
-            return var
+                self.fps_lock_label = QtWidgets.QLabel("FPS Lock:")
+                self.fps_lock_input = QtWidgets.QSpinBox()
+                self.fps_lock_input.setRange(1, 240)
+                self.fps_lock_input.setValue(self.bot_instance.fps_lock)
+                layout.addWidget(self.fps_lock_label)
+                layout.addWidget(self.fps_lock_input)
 
-        def browse_file():
-            filename = filedialog.askopenfilename(filetypes=[("PT files", "*.pt")])
-            if filename:
-                model_path_entry.delete(0, tk.END)
-                model_path_entry.insert(0, filename)
+                self.auto_play_checkbox = QtWidgets.QCheckBox("Auto Play")
+                self.auto_play_checkbox.setChecked(self.bot_instance.auto_play)
+                layout.addWidget(self.auto_play_checkbox)
 
-        def save_and_close():
-            try:
-                self.delay_between_clicks = float(delay_between_clicks_entry.get())
-                self.delay_before_click = float(delay_before_click_entry.get())
-                self.fps_lock = int(fps_lock_entry.get())
-                self.auto_play = auto_play_var.get()
-                self.model_path = model_path_entry.get()
-                self.show_debug_window = show_debug_window_var.get()
-                self.click_all_bombs = click_all_bombs_var.get()
-                self.save_settings()
-                self.console.log(Text("Settings updated!", style="green"), highlight=True)
-            except ValueError:
-                self.console.log(Text("Error: Invalid input. Please enter valid numbers.", style="red"), highlight=True)
+                self.show_debug_window_checkbox = QtWidgets.QCheckBox("Show Debug Window")
+                self.show_debug_window_checkbox.setChecked(self.bot_instance.show_debug_window)
+                layout.addWidget(self.show_debug_window_checkbox)
 
-            settings_window.destroy()
-            self.settings_signal = False
+                self.click_all_bombs_checkbox = QtWidgets.QCheckBox("Click All Bombs")
+                self.click_all_bombs_checkbox.setChecked(self.bot_instance.click_all_bombs)
+                layout.addWidget(self.click_all_bombs_checkbox)
 
-        def cancel_and_close():
-            settings_window.destroy()
-            self.settings_signal = False
-            self.console.log(Text("Settings unchanged.", style="yellow"), highlight=True)
+                self.model_path_label = QtWidgets.QLabel("Model Path:")
+                self.model_path_input = QtWidgets.QLineEdit(self.bot_instance.model_path)
+                self.browse_button = QtWidgets.QPushButton("Browse")
+                self.browse_button.clicked.connect(self.browse_file)
+                model_path_layout = QtWidgets.QHBoxLayout()
+                model_path_layout.addWidget(self.model_path_input)
+                model_path_layout.addWidget(self.browse_button)
+                layout.addWidget(self.model_path_label)
+                layout.addLayout(model_path_layout)
 
-        settings_window = create_settings_window()
-        setup_styles()
-        main_frame = create_main_frame(settings_window)
+                self.button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Save | QtWidgets.QDialogButtonBox.Cancel)
+                self.button_box.accepted.connect(self.save_and_close)
+                self.button_box.rejected.connect(self.cancel_and_close)
+                layout.addWidget(self.button_box)
 
-        delay_between_clicks_entry = create_entry(main_frame, 0, "Delay Between Clicks (seconds):", self.delay_between_clicks)
-        delay_before_click_entry = create_entry(main_frame, 1, "Delay Before Click (seconds):", self.delay_before_click)
-        fps_lock_entry = create_entry(main_frame, 2, "FPS Lock:", self.fps_lock)
-        auto_play_var = create_checkbox(main_frame, 3, "Auto Play:", self.auto_play)
-        show_debug_window_var = create_checkbox(main_frame, 4, "Show Debug Window:", self.show_debug_window)
-        click_all_bombs_var = create_checkbox(main_frame, 5, "Click All Bombs:", self.click_all_bombs)
+                self.setLayout(layout)
 
-        ttk.Label(main_frame, text="Model Path:").grid(row=6, column=0, sticky="w", pady=10)
-        model_path_entry = ttk.Entry(main_frame)
-        model_path_entry.insert(0, self.model_path)
-        model_path_entry.grid(row=6, column=1, sticky="ew", pady=10, padx=(10, 0))
-        ttk.Button(main_frame, text="Browse", command=browse_file).grid(row=6, column=2, pady=10, padx=(10, 0))
+            def browse_file(self):
+                filename, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select Model File", "", "PT files (*.pt)")
+                if filename:
+                    self.model_path_input.setText(filename)
 
-        button_frame = ttk.Frame(main_frame, style="TLabel")
-        button_frame.grid(row=7, column=0, columnspan=3, pady=20)
+            def save_and_close(self):
+                self.bot_instance.delay_between_clicks = self.delay_between_clicks_input.value()
+                self.bot_instance.delay_before_click = self.delay_before_click_input.value()
+                self.bot_instance.fps_lock = self.fps_lock_input.value()
+                self.bot_instance.auto_play = self.auto_play_checkbox.isChecked()
+                self.bot_instance.show_debug_window = self.show_debug_window_checkbox.isChecked()
+                self.bot_instance.click_all_bombs = self.click_all_bombs_checkbox.isChecked()
+                self.bot_instance.model_path = self.model_path_input.text()
+                self.bot_instance.save_settings()
+                self.bot_instance.console.log("Settings updated!", style="green")
+                self.accept()
+                self.bot_instance.settings_signal = False
 
-        ttk.Button(button_frame, text="Save", command=save_and_close).pack(side=tk.LEFT, padx=(0, 10))
-        ttk.Button(button_frame, text="Cancel", command=cancel_and_close).pack(side=tk.LEFT)
+            def cancel_and_close(self):
+                self.reject()
+                self.bot_instance.console.log("Settings unchanged.", style="yellow")
+                self.bot_instance.settings_signal = False
 
-        settings_window.protocol("WM_DELETE_WINDOW", cancel_and_close)
-        settings_window.grab_set()
-        settings_window.focus_set()
-        settings_window.wait_window()
+        app = QtWidgets.QApplication.instance()
+        if app is None:
+            app = QtWidgets.QApplication([])
+
+        settings_window = SettingsWindow(bot_instance=self)
+        settings_window.exec_()
 
     def update_debug_window(self):
         if self.show_debug_window and self.debug_image is not None:
@@ -347,20 +340,19 @@ class TelegramBot:
                 cv2.destroyWindow("Debug Window")
 
     def load_model(self):
-        self.console.log(Text("Loading model...", style="blue"))
+        self.console.log("Loading model...", style="blue")
         if not self.model_path:
             default_model_path = os.path.join(os.path.dirname(__file__), "best.pt")
-            self.model_path = Prompt.ask(Text("Path to model weights file", style="bold magenta"),
-                                         default=default_model_path)
+            self.model_path = Prompt.ask("Path to model weights file", default=default_model_path)
         with Progress() as progress:
             task = progress.add_task("[cyan]Loading...", total=100)
             model = YOLO(self.model_path)
             progress.update(task, advance=100)
-        self.console.log(Text("Model loaded!", style="green"), highlight=True)
+        self.console.log("Model loaded!", style="green")
         return model
 
     def detect_play_button(self, screenshot, bbox, results_queue):
-        reader = easyocr.Reader(['en'])
+        reader = easyocr.Reader(['en'], gpu=torch.cuda.is_available())
         result = reader.readtext(screenshot)
 
         for (bbox_coords, text, prob) in result:
@@ -369,7 +361,7 @@ class TelegramBot:
                 top_left = (int(top_left[0]), int(top_left[1]))
                 bottom_right = (int(bottom_right[0]), int(bottom_right[1]))
                 x, y, w, h = top_left[0], top_left[1], bottom_right[0] - top_left[0], bottom_right[1] - top_left[1]
-                self.console.log(Text(f"'Play' detected at ({x, y, w, h})", style="green"), highlight=True)
+                self.console.log(f"'Play' detected at ({x}, {y}, {w}, {h})", style="green")
                 results_queue.put((x + w // 2, y + h // 2))
                 return
         results_queue.put(None)
@@ -388,9 +380,6 @@ class TelegramBot:
         frame_count = 0
         last_frame_time = time.time()
 
-        keyboard_thread = threading.Thread(target=self.check_keyboard)
-        keyboard_thread.start()
-
         with Live(console=self.console, refresh_per_second=self.fps_lock) as live:
             results_queue = queue.Queue()
             ocr_thread = None
@@ -401,14 +390,17 @@ class TelegramBot:
                     continue
 
                 start_time = time.time()
-                image, bbox = next(capture_gen)
+                try:
+                    image, bbox = next(capture_gen)
+                except StopIteration:
+                    break
 
                 if frame_count % self.FRAME_SKIP == 0:
                     preprocessed_frame = self.preprocess_image(image)
 
                     with self.model_lock:
                         with torch.no_grad():
-                            prediction = self.model(preprocessed_frame, augment=False, visualize=False)
+                            prediction = self.model(preprocessed_frame)
                 else:
                     prediction = []
 
@@ -445,7 +437,10 @@ class TelegramBot:
                                 x1, y1, x2, y2 = map(int, box)
                                 width_scale = bbox["width"] / 640
                                 height_scale = bbox["height"] / 640
-                                x1, y1, x2, y2 = int(x1 * width_scale), int(y1 * height_scale), int(x2 * width_scale), int(y2 * height_scale)
+                                x1 = int(x1 * width_scale)
+                                y1 = int(y1 * height_scale)
+                                x2 = int(x2 * width_scale)
+                                y2 = int(y2 * height_scale)
 
                                 color = (0, 255, 0) if class_id == self.TARGET_ID else (255, 0, 0)
                                 cv2.rectangle(self.debug_image, (x1, y1), (x2, y2), color, 2)
@@ -453,7 +448,9 @@ class TelegramBot:
                                             cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
 
                                 if class_id == self.TARGET_ID or (self.click_all_bombs and class_id == 0):
-                                    overlapped = any(self.check_overlap(box, other_box) for other_box in boxes if not np.array_equal(box, other_box))
+                                    overlapped = any(
+                                        self.check_overlap(box, other_box) for other_box in boxes if not np.array_equal(box, other_box)
+                                    )
 
                                     if not overlapped:
                                         x1 += bbox["left"]
@@ -488,7 +485,7 @@ class TelegramBot:
                     border_style="green",
                 )
 
-                hotkeys_panel = Panel(Text("CTRL+Q - Exit\nCTRL+X - Pause/Resume\nCTRL+W - Settings"), title="Hotkeys",
+                hotkeys_panel = Panel("CTRL+Q - Exit\nCTRL+X - Pause/Resume\nCTRL+W - Settings", title="Hotkeys",
                                       border_style="magenta")
 
                 layout = Layout()
@@ -498,9 +495,13 @@ class TelegramBot:
                 live.update(layout)
                 frame_count += 1
 
-        keyboard_thread.join()
         if cv2.getWindowProperty("Debug Window", cv2.WND_PROP_VISIBLE) >= 1:
             cv2.destroyAllWindows()
+
+    def __del__(self):
+        self.stop_signal = True
+        if self.keyboard_thread.is_alive():
+            self.keyboard_thread.join()
 
 
 if __name__ == "__main__":
