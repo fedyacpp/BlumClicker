@@ -115,7 +115,6 @@ BlumClicker offers a range of settings for customization:
 - **Delay Between Clicks:** Set custom delays.
 - **Debug Mode:** Enable to display model predictions.
 - **FPS Limiter:** Reduces system load.
-- **Click Probability (Upcoming):** Adds randomness to clicks.
 
 ## Troubleshooting
 
@@ -139,7 +138,7 @@ If issues persist, open an issue on GitHub or contact me directly.
 - [x] Implement auto-replay
 - [x] Introduce debug mode
 - [x] Add FPS limiter
-- [ ] Implement click probability
+- [ ] Implement click probability (not possible because of method of recognition - it's discrete)
 - [x] Provide even more information in the README
 
 ## Contributing
