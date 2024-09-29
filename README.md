@@ -1,6 +1,6 @@
 # BlumClicker
 
-## Latest Update: July 10, 2024
+## Latest Update: September 29, 2024
 
 **Important:** The collaboration has ended, so the old dataset has been restored. If you had "Click on all bombs" enabled, please turn it off. It is also recommended to re-download the model weights for optimal performance.
 
