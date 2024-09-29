@@ -35,7 +35,7 @@ BlumClicker is an automation tool designed to interact with Blum's Drop Game on 
 
 ## System Requirements
 
-- **Operating System:** Windows, macOS, or Linux
+- **Operating System:** Windows
 - **Python:** Version 3.10 or higher
 - **Hardware:**
   - **Recommended:** NVIDIA GPU (RTX series) for best performance
