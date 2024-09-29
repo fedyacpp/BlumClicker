@@ -8,3 +8,4 @@ mss
 rich
 easyocr
 ultralytics
+PyQt5
