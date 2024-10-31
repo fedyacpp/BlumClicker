@@ -366,14 +366,6 @@ class TelegramBot:
                 return
         results_queue.put(None)
 
-    def check_overlap(self, box1, box2):
-        x1, y1, x2, y2 = box1
-        x3, y3, x4, y4 = box2
-
-        if y3 < y2 and x3 < x2 and x4 > x1:
-            return True
-        return False
-
     def run(self):
         self.bring_window_to_foreground()
         capture_gen = self.capture_telegram_window()
@@ -448,18 +440,13 @@ class TelegramBot:
                                             cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
 
                                 if class_id == self.TARGET_ID or (self.click_all_bombs and class_id == 0):
-                                    overlapped = any(
-                                        self.check_overlap(box, other_box) for other_box in boxes if not np.array_equal(box, other_box)
-                                    )
-
-                                    if not overlapped:
-                                        x1 += bbox["left"]
-                                        y1 += bbox["top"]
-                                        x2 += bbox["left"]
-                                        y2 += bbox["top"]
-                                        time.sleep(self.delay_before_click)
-                                        self.last_click_info = self.perform_click((x1 + x2) // 2, (y1 + y2) // 2)
-                                        time.sleep(self.delay_between_clicks)
+                                    x1 += bbox["left"]
+                                    y1 += bbox["top"]
+                                    x2 += bbox["left"]
+                                    y2 += bbox["top"]
+                                    time.sleep(self.delay_before_click)
+                                    self.last_click_info = self.perform_click((x1 + x2) // 2, (y1 + y2) // 2)
+                                    time.sleep(self.delay_between_clicks)
 
                         self.update_debug_window()
 
