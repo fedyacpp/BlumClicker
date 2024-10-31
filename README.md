@@ -1,10 +1,13 @@
 # BlumClicker
 
-## Latest Update: September 29, 2024
+## Latest Update: October 31, 2024
 
-**Important:** The collaboration has ended, so the old dataset has been restored. If you had "Click on all bombs" enabled, please turn it off. It is also recommended to re-download the model weights for optimal performance.
+**Important:**  
+- Update main.py. Overlap checking has been removed as it was causing incorrect script behavior.
+- Redownload and replace weight file [link in step 4](#installation).
+- Please run `pip install --upgrade ultralytics` in the script's folder to update the libraries.
 
-BlumClicker is an automation tool designed to interact with Blum's Drop Game on Telegram using YOLOv8-based image detection. It achieves near-perfect accuracy in identifying and clicking on snowflakes. [Watch the demo](https://photos.app.goo.gl/caVfEjbUsoawek9J8).
+BlumClicker is an automation tool designed to interact with Blum's Drop Game on Telegram using YOLOv11-based image detection. It achieves near-perfect accuracy in identifying and clicking on snowflakes. [Watch the demo](https://photos.app.goo.gl/caVfEjbUsoawek9J8).
 
 *Русская версия README [здесь](https://github.com/fedyacpp/BlumClicker/blob/main/README_ru.md).*
 
@@ -24,7 +27,7 @@ BlumClicker is an automation tool designed to interact with Blum's Drop Game on 
 ## Features
 
 - **Automatic Telegram Window Detection:** No manual setup required; the script automatically finds the game window.
-- **YOLOv8-Powered Object Recognition:** Utilizes advanced technology for high accuracy.
+- **YOLOv11-Powered Object Recognition:** Utilizes advanced technology for high accuracy.
 - **Automated Snowflake Clicking:** Quickly and efficiently clicks on detected objects.
 - **Customizable Settings:** Ability to adjust delays, enable debug mode, and more.
 - **Auto Replay Feature:** Automatically starts a new game after the current one ends.
