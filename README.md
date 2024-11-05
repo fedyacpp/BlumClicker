@@ -1,11 +1,12 @@
 # BlumClicker
 
-## Latest Update: October 31, 2024
+## Latest Update: November 5, 2024
 
-**Important:**  
-- Update main.py. Overlap checking has been removed as it was causing incorrect script behavior.
-- Redownload and replace weight file [link in step 4](#installation).
-- Please run `pip install --upgrade ultralytics` in the script's folder to update the libraries.
+**Important:**
+
+- **Halloween Event Ended:** The Halloween promotion has concluded, and old model weights have been returned. Please redownload the weights file from the [link in step 4](#installation).
+- **No Updates for U.S. Elections:** There will be no updates to the weights for the upcoming U.S. elections. Reason: I have personal life, I'm a human just like you.
+- **Library Update:** Please run `pip install --upgrade ultralytics` in the script's folder to update the required libraries.
 
 BlumClicker is an automation tool designed to interact with Blum's Drop Game on Telegram using YOLOv11-based image detection. It achieves near-perfect accuracy in identifying and clicking on snowflakes. [Watch the demo](https://photos.app.goo.gl/caVfEjbUsoawek9J8).
 
@@ -69,6 +70,12 @@ cd BlumClicker
 
 ### Step 3: Install Python Dependencies
 
+Make sure to upgrade the `ultralytics` library:
+
+```bash
+pip install --upgrade ultralytics
+```
+
 #### For GPU Users:
 
 ```bash
@@ -125,8 +132,9 @@ BlumClicker offers a range of settings for customization:
   - Ensure your GPU supports CUDA and it's installed correctly.
 - **Dependency Errors:**
   - Check the versions of installed libraries.
+  - Make sure you have upgraded `ultralytics` by running `pip install --upgrade ultralytics`.
 - **Model Weights Update:**
-  - Make sure you're using the latest `best.pt`.
+  - Make sure you're using the latest `best.pt` from the [link](https://drive.google.com/file/d/1lUTl4GulseoWs_vhPnYp0qkIYaumKMNg/view?usp=sharing).
 
 If issues persist, open an issue on GitHub or contact me directly.
 
@@ -141,7 +149,7 @@ If issues persist, open an issue on GitHub or contact me directly.
 - [x] Implement auto-replay
 - [x] Introduce debug mode
 - [x] Add FPS limiter
-- [ ] Implement click probability (not possible because of method of recognition - it's discrete)
+- [ ] Implement click probability (not possible because of method of recognition—it's discrete)
 - [x] Provide even more information in the README
 
 ## Contributing
