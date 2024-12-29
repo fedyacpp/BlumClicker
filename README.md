@@ -1,12 +1,10 @@
 # BlumClicker
 
-## Latest Update: November 5, 2024
+## Latest Update: December 29, 2024
 
 **Important:**
 
-- **Halloween Event Ended:** The Halloween promotion has concluded, and old model weights have been returned. Please redownload the weights file from the [link in step 4](#installation).
-- **No Updates for U.S. Elections:** There will be no updates to the weights for the upcoming U.S. elections. Reason: I have personal life, I'm a human just like you.
-- **Library Update:** Please run `pip install --upgrade ultralytics` in the script's folder to update the required libraries.
+- **No Model Weight Updates for the New Year:** Due to a lack of free time, there will be no updates to the model weights for the upcoming New Year update.
 
 BlumClicker is an automation tool designed to interact with Blum's Drop Game on Telegram using YOLOv11-based image detection. It achieves near-perfect accuracy in identifying and clicking on snowflakes. [Watch the demo](https://photos.app.goo.gl/caVfEjbUsoawek9J8).
 
