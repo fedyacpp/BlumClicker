@@ -1,160 +1,113 @@
 # BlumClicker
 
-## Latest Update: December 29, 2024
+**Latest Update:** December 29, 2024  
+No new model weight updates will be released at this time.
 
-**Important:**
-
-- **No Model Weight Updates for the New Year:** Due to a lack of free time, there will be no updates to the model weights for the upcoming New Year update.
-
-BlumClicker is an automation tool designed to interact with Blum's Drop Game on Telegram using YOLOv11-based image detection. It achieves near-perfect accuracy in identifying and clicking on snowflakes. [Watch the demo](https://photos.app.goo.gl/caVfEjbUsoawek9J8).
-
-*Русская версия README [здесь](https://github.com/fedyacpp/BlumClicker/blob/main/README_ru.md).*
+BlumClicker is an automation tool for Blum's Drop Game on Telegram, powered by YOLOv11 for near-perfect snowflake detection.  
+[Watch the demo.](https://photos.app.goo.gl/caVfEjbUsoawek9J8)  
+*(Русская версия README [здесь](https://github.com/fedyacpp/BlumClicker/blob/main/README_ru.md)).*
 
 ## Table of Contents
 
-- [Features](#features)
-- [Demo](#demo)
-- [System Requirements](#system-requirements)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Settings](#settings)
-- [Troubleshooting](#troubleshooting)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
+- [Features](#features)  
+- [Demo](#demo)  
+- [System Requirements](#system-requirements)  
+- [Installation](#installation)  
+- [Usage](#usage)  
+- [Settings](#settings)  
+- [Troubleshooting](#troubleshooting)  
+- [Roadmap](#roadmap)  
+- [Contributing](#contributing)  
 - [Contact](#contact)
 
 ## Features
 
-- **Automatic Telegram Window Detection:** No manual setup required; the script automatically finds the game window.
-- **YOLOv11-Powered Object Recognition:** Utilizes advanced technology for high accuracy.
-- **Automated Snowflake Clicking:** Quickly and efficiently clicks on detected objects.
-- **Customizable Settings:** Ability to adjust delays, enable debug mode, and more.
-- **Auto Replay Feature:** Automatically starts a new game after the current one ends.
+- **Automatic Window Detection** – Locates the Telegram game window with no extra setup.  
+- **YOLOv11 Object Recognition** – Offers high accuracy in detecting snowflakes.  
+- **One-Click Automation** – Instantly clicks on detected targets.  
+- **Configurable Settings** – Delays, debug mode, FPS limiter, and more.  
+- **Auto Replay** – Automatically restarts when the current game ends.
 
 ## Demo
 
-[Watch BlumClicker in action](https://photos.app.goo.gl/caVfEjbUsoawek9J8).
+[Video Demo](https://photos.app.goo.gl/caVfEjbUsoawek9J8)
 
 ## System Requirements
 
-- **Operating System:** Windows
-- **Python:** Version 3.10 or higher
-- **Hardware:**
-  - **Recommended:** NVIDIA GPU (RTX series) for best performance
-  - **Alternative:** CPU (may run slower and less accurately)
-- **Additional:**
-  - **CUDA Toolkit:** For GPU users (tested with CUDA 12.5)
-  - **Telegram Desktop:** The script works only with the desktop version of Telegram
+- **OS:** Windows  
+- **Python:** 3.10+ (tested on 3.12.X) 
+- **GPU:** NVIDIA RTX (or use CPU with lower performance)  
+- **CUDA Toolkit:** Required for GPU acceleration (tested with CUDA 12.5 and 11.8)  
+- **Telegram Desktop:** Mandatory for gameplay automation
 
 ## Installation
 
-Follow these steps to install BlumClicker on your device.
-
-### Step 1: Install CUDA Toolkit (GPU Users Only)
-
-If you have an NVIDIA graphics card, it's recommended to install the CUDA Toolkit.
-
-- **Download CUDA Toolkit:**
-  - Go to the [official website](https://developer.nvidia.com/cuda-downloads) and select your operating system.
-- **Install CUDA Toolkit:**
-  - Run the downloaded installer and follow the instructions.
-
-### Step 2: Clone the Repository
-
-```bash
-git clone https://github.com/fedyacpp/BlumClicker.git
-cd BlumClicker
-```
-
-### Step 3: Install Python Dependencies
-
-Make sure to upgrade the `ultralytics` library:
-
-```bash
-pip install --upgrade ultralytics
-```
-
-#### For GPU Users:
-
-```bash
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-pip install -r requirements.txt
-```
-
-#### For CPU Users:
-
-```bash
-pip install torch torchvision torchaudio
-pip install -r requirements.txt
-```
-
-### Step 4: Download Model Weights
-
-- **Download `best.pt`:**
-  - [Download link](https://drive.google.com/file/d/1lUTl4GulseoWs_vhPnYp0qkIYaumKMNg/view?usp=sharing)
-- **Place the File:**
-  - Move `best.pt` into the BlumClicker directory
-
-### Step 5: Verify CUDA Installation (GPU Users Only)
-
-```bash
-python isCudaAvailable.py
-```
-
-You should see a message confirming CUDA availability.
-
-### Step 6: Run the Script
-
-```bash
-python main.py
-```
+1. **(GPU) Install CUDA Toolkit**  
+   - Download from [NVIDIA](https://developer.nvidia.com/cuda-downloads) and follow the instructions.
+2. **Clone the Repository**  
+   ```bash
+   git clone https://github.com/fedyacpp/BlumClicker.git
+   cd BlumClicker
+   ```
+3. **Install Python Dependencies**  
+   - **GPU Users:**  
+     ```bash
+     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+     pip install -r requirements.txt
+     ```
+   - **CPU Users:**  
+     ```bash
+     pip install torch torchvision torchaudio
+     pip install -r requirements.txt
+     ```
+4. **Download `best.pt`**  
+   - [Link](https://drive.google.com/file/d/1lUTl4GulseoWs_vhPnYp0qkIYaumKMNg/view?usp=sharing) and place it in the BlumClicker directory.
+5. **Verify CUDA (GPU Only)**  
+   ```bash
+   python isCudaAvailable.py
+   ```
+6. **Run**  
+   ```bash
+   python main.py
+   ```
 
 ## Usage
 
-1. **Open Blum's Drop Game in Telegram Desktop.**
-2. **Run the Script:** Execute `python main.py`.
-3. **Start Playing:** The script will automatically detect the game window and begin interaction.
-4. **Stop the Script:** Press `CTRL+Q` twice.
+1. Open Blum's Drop Game in Telegram Desktop.  
+2. Run `python main.py`.  
+3. The script detects the game window and automates clicks.  
+4. Press **CTRL+Q** twice to stop.
 
 ## Settings
 
-BlumClicker offers a range of settings for customization:
-
-- **Delay Between Clicks:** Set custom delays.
-- **Debug Mode:** Enable to display model predictions.
-- **FPS Limiter:** Reduces system load.
+- **Delays:** Customize click intervals.  
+- **Debug Mode:** Displays model predictions.  
+- **FPS Limiter:** Reduces CPU/GPU load.  
 
 ## Troubleshooting
 
-- **CUDA Issues:**
-  - Ensure your GPU supports CUDA and it's installed correctly.
-- **Dependency Errors:**
-  - Check the versions of installed libraries.
-  - Make sure you have upgraded `ultralytics` by running `pip install --upgrade ultralytics`.
-- **Model Weights Update:**
-  - Make sure you're using the latest `best.pt` from the [link](https://drive.google.com/file/d/1lUTl4GulseoWs_vhPnYp0qkIYaumKMNg/view?usp=sharing).
-
-If issues persist, open an issue on GitHub or contact me directly.
+- **CUDA Not Detected:** Update drivers and check your GPU compatibility.  
+- **Dependency Errors:** Ensure you installed/updated `ultralytics` and the correct `torch` version.  
+- **No Model File:** Confirm `best.pt` is in the BlumClicker directory.
 
 ## Roadmap
 
-- [x] Expand README with additional information
-- [x] Improve terminal output for more information
-- [x] Enhance user-friendliness
-- [x] Train the model for increased accuracy
-- [x] Add customizable settings
-- [x] Expand the dataset
-- [x] Implement auto-replay
-- [x] Introduce debug mode
-- [x] Add FPS limiter
-- [ ] Implement click probability (not possible because of method of recognition—it's discrete)
-- [x] Provide even more information in the README
+- [x] Additional info in README  
+- [x] Improved terminal output  
+- [x] Enhanced user-friendliness  
+- [x] Higher model accuracy  
+- [x] Custom settings  
+- [x] Larger dataset  
+- [x] Auto-replay  
+- [x] Debug mode  
+- [x] FPS limiter  
+- [ ] Click probability (currently not feasible)  
 
 ## Contributing
 
-Want to help improve BlumClicker? Fork the repository and submit a pull request with your suggestions.
+Contributions are welcome. Fork the repo and create a pull request.
 
 ## Contact
 
-- **Discord:** [fedyacpp](https://discord.com/users/fedyacpp)
+- **Discord:** [fedyacpp](https://discord.com/users/fedyacpp)  
 - **Telegram:** [@fedyacpp](https://t.me/fedyacpp)
