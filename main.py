@@ -49,7 +49,7 @@ class RichPanelLoggingHandler(logging.Handler):
 
 class TelegramBot:
     CONFIDENCE_THRESHOLD = 0.6
-    WINDOW_TITLE = "Ayugram"
+    WINDOW_TITLE = "Telegram"
     FRAME_SKIP = 1
     TARGET_ID = 1
     SETTINGS_FILE = "settings.json"
