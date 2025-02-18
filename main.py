@@ -16,6 +16,7 @@ import win32con
 import keyboard
 import mss
 import easyocr
+
 from PyQt5 import QtWidgets
 from ultralytics import YOLO
 from rich.layout import Layout
@@ -35,7 +36,8 @@ logging.getLogger("ultralytics").setLevel(logging.CRITICAL)
 
 
 class RichPanelLoggingHandler(logging.Handler):
-    def __init__(self, custom_console):
+
+    def __init__(self, custom_console: Console):
         super().__init__()
         self.console = custom_console
 
@@ -49,30 +51,31 @@ class RichPanelLoggingHandler(logging.Handler):
 
 class TelegramBot:
     CONFIDENCE_THRESHOLD = 0.6
-    WINDOW_TITLE = "Telegram"
+    WINDOW_TITLE = "Blum"
     FRAME_SKIP = 1
     TARGET_ID = 1
     SETTINGS_FILE = "settings.json"
 
-    def __init__(self):
-        self.stop_signal = False
-        self.pause_signal = False
-        self.settings_signal = False
-        self.fps_lock = 60
-        self.show_debug_window = False
-        self.delay_between_clicks = 0.0
-        self.delay_before_click = 0.0
-        self.auto_play = False
-        self.model_path = ""
-        self.click_all_bombs = False
+    def __init__(self) -> None:
+        self.stop_signal: bool = False
+        self.pause_signal: bool = False
+        self.settings_signal: bool = False
+
+        self.fps_lock: int = 60
+        self.show_debug_window: bool = False
+        self.delay_between_clicks: float = 0.0
+        self.delay_before_click: float = 0.0
+        self.auto_play: bool = False
+        self.model_path: str = ""
+        self.click_all_bombs: bool = False
+
         self.model_lock = threading.Lock()
-        self.click_counters = {}
+        self.click_counters: dict = {}
         self.last_click_info = None
         self.debug_image = None
 
         self.messages_panel = self.MessagesPanel("", title="Messages", border_style="blue")
         self.console = self.CustomConsole(messages_panel=self.messages_panel, force_terminal=True, color_system="auto")
-
         handler = RichPanelLoggingHandler(self.console)
         handler.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
         logging.getLogger().handlers.clear()
@@ -81,6 +84,9 @@ class TelegramBot:
 
         self.load_settings()
         self.model = self.load_model()
+
+        self.ocr_reader = easyocr.Reader(["en", "ru"], gpu=torch.cuda.is_available())
+
         self.window = self.find_telegram_window()
         if not self.window:
             self.console.log("[red]Telegram window not found. Exiting...[/red]")
@@ -96,7 +102,7 @@ class TelegramBot:
             self.max_lines = 15
             self.messages = []
 
-        def add_message(self, message: str):
+        def add_message(self, message: str) -> None:
             self.messages.append(message)
             self.renderable = Text.from_markup("\n".join(self.messages[-self.max_lines:]))
 
@@ -105,15 +111,14 @@ class TelegramBot:
             super().__init__(*args, **kwargs)
             self.messages_panel = messages_panel
 
-        def log(self, message: str, **kwargs):
+        def log(self, message: str, **kwargs) -> None:
             if self.messages_panel:
                 timestamp = time.strftime('%H:%M:%S')
                 formatted_message = f"[{timestamp}] {message}"
                 self.messages_panel.add_message(formatted_message)
             super().log(message, markup=True, **kwargs)
 
-    def log(self, *objects, **kwargs):
-        highlight = kwargs.pop("highlight", False)
+    def log(self, *objects, highlight: bool = False, **kwargs) -> None:
         msg_str = " ".join(str(obj) for obj in objects)
         message = Text.from_markup(msg_str)
         if highlight:
@@ -124,7 +129,7 @@ class TelegramBot:
         else:
             super().log(message, **kwargs)
 
-    def load_settings(self):
+    def load_settings(self) -> None:
         if not os.path.exists(self.SETTINGS_FILE):
             self.console.log("Settings file does not exist. Using default settings.")
             logging.warning(f"'{self.SETTINGS_FILE}' not found; using defaults.")
@@ -147,7 +152,7 @@ class TelegramBot:
             self.console.log(f"[red]Unexpected error loading settings: {e}[/red]\nUsing default settings.")
             logging.warning(f"Unexpected error loading settings: {e}. Using defaults.")
 
-    def save_settings(self):
+    def save_settings(self) -> None:
         settings = {
             "DELAY_BETWEEN_CLICKS": self.delay_between_clicks,
             "DELAY_BEFORE_CLICK": self.delay_before_click,
@@ -166,7 +171,7 @@ class TelegramBot:
             self.console.log(f"[red]Error saving settings: {e}[/red]")
             logging.warning(f"Error saving settings: {e}")
 
-    def load_model(self):
+    def load_model(self) -> YOLO:
         self.console.log("[blue]Loading model...[/blue]")
         if not self.model_path:
             default_model_path = os.path.join(os.path.dirname(__file__), "best.pt")
@@ -188,7 +193,7 @@ class TelegramBot:
             logging.warning(f"Failed to load model: {e}")
             exit()
 
-    def find_telegram_window(self):
+    def find_telegram_window(self) -> gw.Win32Window:
         self.console.log(f"[blue]Searching for window '{self.WINDOW_TITLE}'...[/blue]")
         windows = gw.getWindowsWithTitle(self.WINDOW_TITLE)
         if not windows:
@@ -199,7 +204,7 @@ class TelegramBot:
         logging.info(f"Found window: {windows[0].title}")
         return windows[0]
 
-    def bring_window_to_foreground(self):
+    def bring_window_to_foreground(self) -> None:
         hwnd = self.window._hWnd
         try:
             window_thread, _ = win32process.GetWindowThreadProcessId(hwnd)
@@ -248,23 +253,26 @@ class TelegramBot:
         return x, y, self.click_counters[click_key]
 
     def preprocess_image(self, image: np.ndarray) -> np.ndarray:
-        return cv2.resize(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), (640, 640))
+        rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        return cv2.resize(rgb, (640, 640))
 
-    def update_debug_window(self):
+    def update_debug_window(self) -> None:
         if self.show_debug_window and self.debug_image is not None:
             cv2.imshow("Debug Window", self.debug_image)
             hwnd = win32gui.FindWindow(None, "Debug Window")
             if hwnd != 0:
-                win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
+                win32gui.SetWindowPos(
+                    hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                    win32con.SWP_NOMOVE | win32con.SWP_NOSIZE
+                )
             cv2.waitKey(1)
         else:
             if cv2.getWindowProperty("Debug Window", cv2.WND_PROP_VISIBLE) >= 1:
                 cv2.destroyWindow("Debug Window")
 
-    def detect_play_button(self, screenshot: np.ndarray, bbox: dict, results_queue: queue.Queue):
+    def detect_play_button(self, screenshot: np.ndarray, bbox: dict, results_queue: queue.Queue) -> None:
         try:
-            reader = easyocr.Reader(["en", "ru"], gpu=torch.cuda.is_available())
-            result = reader.readtext(screenshot)
+            result = self.ocr_reader.readtext(screenshot)
         except Exception as e:
             self.console.log(f"[red]EasyOCR error: {e}[/red]")
             logging.warning(f"EasyOCR error: {e}")
@@ -272,11 +280,9 @@ class TelegramBot:
             return
         for (bbox_coords, text, prob) in result:
             if ("Play" in text) or ("Играть" in text):
-                (top_left, top_right, bottom_right, bottom_left) = bbox_coords
-                top_left = (int(top_left[0]), int(top_left[1]))
-                bottom_right = (int(bottom_right[0]), int(bottom_right[1]))
-                x, y = top_left[0], top_left[1]
-                w, h = bottom_right[0] - x, bottom_right[1] - y
+                (top_left, _, bottom_right, _) = bbox_coords
+                x, y = int(top_left[0]), int(top_left[1])
+                w, h = int(bottom_right[0] - top_left[0]), int(bottom_right[1] - top_left[1])
                 self.console.log(f"[green]'Play' detected at ({x}, {y}, {w}, {h})[/green]")
                 results_queue.put((x + w // 2, y + h // 2))
                 return
@@ -286,7 +292,7 @@ class TelegramBot:
         cpu_usage = psutil.cpu_percent()
         mem = psutil.virtual_memory()
         mem_usage = mem.percent
-        mem_total = mem.total / (1024**3)
+        mem_total = mem.total / (1024 ** 3)
         try:
             if torch.cuda.is_available():
                 gpu = torch.cuda.get_device_properties(0)
@@ -307,7 +313,7 @@ class TelegramBot:
             "GPU Usage": gpu_usage,
         }
 
-    def check_keyboard(self):
+    def check_keyboard(self) -> None:
         while not self.stop_signal:
             try:
                 if keyboard.is_pressed("ctrl+q"):
@@ -332,7 +338,7 @@ class TelegramBot:
                 logging.warning(f"Keyboard error: {e}")
                 time.sleep(0.1)
 
-    def show_settings_panel(self):
+    def show_settings_panel(self) -> None:
         class SettingsWindow(QtWidgets.QDialog):
             def __init__(self, bot_instance, parent=None):
                 super().__init__(parent)
@@ -343,6 +349,7 @@ class TelegramBot:
 
             def init_ui(self):
                 layout = QtWidgets.QVBoxLayout()
+
                 self.delay_between_clicks_label = QtWidgets.QLabel("Delay Between Clicks (seconds):")
                 self.delay_between_clicks_input = QtWidgets.QDoubleSpinBox()
                 self.delay_between_clicks_input.setRange(0, 10)
@@ -388,7 +395,9 @@ class TelegramBot:
                 layout.addWidget(self.model_path_label)
                 layout.addLayout(model_path_layout)
 
-                self.button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Save | QtWidgets.QDialogButtonBox.Cancel)
+                self.button_box = QtWidgets.QDialogButtonBox(
+                    QtWidgets.QDialogButtonBox.Save | QtWidgets.QDialogButtonBox.Cancel
+                )
                 self.button_box.accepted.connect(self.save_and_close)
                 self.button_box.rejected.connect(self.cancel_and_close)
                 layout.addWidget(self.button_box)
@@ -396,7 +405,9 @@ class TelegramBot:
                 self.setLayout(layout)
 
             def browse_file(self):
-                filename, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select Model File", "", "PT files (*.pt)")
+                filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+                    self, "Select Model File", "", "PT files (*.pt)"
+                )
                 if filename:
                     self.model_path_input.setText(filename)
 
@@ -426,24 +437,27 @@ class TelegramBot:
         settings_window = SettingsWindow(bot_instance=self)
         settings_window.exec_()
 
-    def run(self):
+    def run(self) -> None:
         try:
             self.bring_window_to_foreground()
             capture_gen = self.capture_telegram_window()
             frame_count = 0
             last_frame_time = time.time()
+            results_queue = queue.Queue()
+            ocr_thread = None
+
             with Live(console=self.console, refresh_per_second=self.fps_lock) as live:
-                results_queue = queue.Queue()
-                ocr_thread = None
                 while not self.stop_signal:
                     if self.settings_signal:
                         self.show_settings_panel()
                         continue
+
                     start_time = time.time()
                     try:
                         image, bbox = next(capture_gen)
                     except StopIteration:
                         break
+
                     if frame_count % self.FRAME_SKIP == 0:
                         preprocessed_frame = self.preprocess_image(image)
                         with self.model_lock:
@@ -451,9 +465,13 @@ class TelegramBot:
                                 prediction = self.model(preprocessed_frame)
                     else:
                         prediction = []
+
                     if self.auto_play and (ocr_thread is None or not ocr_thread.is_alive()):
-                        ocr_thread = threading.Thread(target=self.detect_play_button, args=(image, bbox, results_queue), daemon=True)
+                        ocr_thread = threading.Thread(
+                            target=self.detect_play_button, args=(image, bbox, results_queue), daemon=True
+                        )
                         ocr_thread.start()
+
                     try:
                         play_button_coords = results_queue.get_nowait()
                         if play_button_coords:
@@ -462,6 +480,7 @@ class TelegramBot:
                             time.sleep(self.delay_between_clicks)
                     except queue.Empty:
                         pass
+
                     if prediction:
                         det = prediction[0]
                         if det.boxes is not None:
@@ -469,6 +488,7 @@ class TelegramBot:
                             scores = det.boxes.conf.cpu().numpy()
                             class_ids = det.boxes.cls.cpu().numpy().astype(int)
                             self.debug_image = image.copy()
+
                             sorted_indices = np.argsort(boxes[:, 1])
                             for i in sorted_indices:
                                 box = boxes[i]
@@ -484,16 +504,18 @@ class TelegramBot:
                                     y2 = int(y2 * height_scale)
                                     color = (0, 255, 0) if class_id == self.TARGET_ID else (255, 0, 0)
                                     cv2.rectangle(self.debug_image, (x1, y1), (x2, y2), color, 2)
-                                    cv2.putText(self.debug_image, f"{class_id}: {score:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
+                                    cv2.putText(
+                                        self.debug_image, f"{class_id}: {score:.2f}",
+                                        (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2
+                                    )
                                     if class_id == self.TARGET_ID or (self.click_all_bombs and class_id == 0):
-                                        x1 += bbox["left"]
-                                        y1 += bbox["top"]
-                                        x2 += bbox["left"]
-                                        y2 += bbox["top"]
+                                        x_center = (x1 + x2) // 2 + bbox["left"]
+                                        y_center = (y1 + y2) // 2 + bbox["top"]
                                         time.sleep(self.delay_before_click)
-                                        self.last_click_info = self.perform_click((x1 + x2) // 2, (y1 + y2) // 2)
+                                        self.last_click_info = self.perform_click(x_center, y_center)
                                         time.sleep(self.delay_between_clicks)
                             self.update_debug_window()
+
                     current_time = time.time()
                     elapsed_time = current_time - last_frame_time
                     fps = 1 / elapsed_time if elapsed_time > 0 else float("inf")
@@ -501,6 +523,7 @@ class TelegramBot:
                     target_frame_time = 1 / self.fps_lock
                     if elapsed_time < target_frame_time:
                         time.sleep(target_frame_time - elapsed_time)
+
                     system_info = self.get_system_info()
                     if self.last_click_info:
                         x, y, count = self.last_click_info
@@ -512,7 +535,8 @@ class TelegramBot:
                     else:
                         click_info_panel = Panel("No clicks", title="Click Info", border_style="yellow")
                     system_info_panel = Panel(
-                        f"FPS: {fps:.2f}\nCPU: {system_info['CPU Usage']}\nRAM: {system_info['Memory Usage']}\nRAM Total: {system_info['Total Memory']}\nGPU: {system_info['GPU']}\nGPU Usage: {system_info['GPU Usage']}",
+                        f"FPS: {fps:.2f}\nCPU: {system_info['CPU Usage']}\nRAM: {system_info['Memory Usage']}\n"
+                        f"RAM Total: {system_info['Total Memory']}\nGPU: {system_info['GPU']}\nGPU Usage: {system_info['GPU Usage']}",
                         title="System Info",
                         border_style="green",
                     )
@@ -521,8 +545,12 @@ class TelegramBot:
                         title="Hotkeys",
                         border_style="magenta",
                     )
+
                     layout = Layout()
-                    layout.split_row(Layout(name="left"), Layout(self.messages_panel, name="right"))
+                    layout.split_row(
+                        Layout(name="left"),
+                        Layout(self.messages_panel, name="right")
+                    )
                     layout["left"].split_column(
                         Layout(click_info_panel),
                         Layout(system_info_panel),
@@ -530,8 +558,10 @@ class TelegramBot:
                     )
                     live.update(layout)
                     frame_count += 1
+
             if cv2.getWindowProperty("Debug Window", cv2.WND_PROP_VISIBLE) >= 1:
                 cv2.destroyAllWindows()
+
         except Exception as e:
             logging.exception(f"An error occurred while running the bot: {e}")
             self.console.log(f"[red]An unexpected error occurred: {e}[/red]")
