@@ -1,11 +1,21 @@
+# Core dependencies
 opencv-python
 numpy
-pygetwindow
-psutil
-keyboard
-pywin32
-mss
-rich
-easyocr
-ultralytics
+torch>=2.0.0
+torchvision
+torchaudio
+ultralytics>=8.0.0
+
+# GUI and visualization
 PyQt5
+rich>=12.0.0
+
+# System interaction
+pygetwindow
+pywin32
+keyboard
+mss
+psutil
+
+# OCR
+easyocr
