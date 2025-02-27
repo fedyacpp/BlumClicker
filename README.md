@@ -1,113 +1,212 @@
 # BlumClicker
 
-**Latest Update:** December 29, 2024  
-No new model weight updates will be released at this time.
+**Version:** 2.0.0  
+**Last Updated:** February 27, 2025
 
-BlumClicker is an automation tool for Blum's Drop Game on Telegram, powered by YOLOv11 for near-perfect snowflake detection.  
-[Watch the demo.](https://photos.app.goo.gl/caVfEjbUsoawek9J8)  
-*(Русская версия README [здесь](https://github.com/fedyacpp/BlumClicker/blob/main/README_ru.md)).*
+BlumClicker is an automation tool for Blum's Drop Game on Telegram, powered by YOLOv11 computer vision technology for precise snowflake detection and interaction. The tool features a graphical interface, extensive customization options, and intelligent gameplay automation.
+
+*Русская версия [здесь](https://github.com/fedyacpp/BlumClicker/blob/main/README_ru.md).*
+
+[Watch Demo Video](https://photos.app.goo.gl/caVfEjbUsoawek9J8)
 
 ## Table of Contents
-
-- [Features](#features)  
-- [Demo](#demo)  
-- [System Requirements](#system-requirements)  
-- [Installation](#installation)  
-- [Usage](#usage)  
-- [Settings](#settings)  
-- [Troubleshooting](#troubleshooting)  
-- [Roadmap](#roadmap)  
-- [Contributing](#contributing)  
+- [Features](#features)
+- [System Requirements](#system-requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Hotkeys](#hotkeys)
+- [Troubleshooting](#troubleshooting)
+- [Advanced Features](#advanced-features)
+- [FAQ](#faq)
+- [Contributing](#contributing)
 - [Contact](#contact)
 
 ## Features
 
-- **Automatic Window Detection** – Locates the Telegram game window with no extra setup.  
-- **YOLOv11 Object Recognition** – Offers high accuracy in detecting snowflakes.  
-- **One-Click Automation** – Instantly clicks on detected targets.  
-- **Configurable Settings** – Delays, debug mode, FPS limiter, and more.  
-- **Auto Replay** – Automatically restarts when the current game ends.
-
-## Demo
-
-[Video Demo](https://photos.app.goo.gl/caVfEjbUsoawek9J8)
+- **Window Recognition** - Automatically detects and focuses on the Telegram game window
+- **YOLOv11 Object Detection** - State-of-the-art visual recognition for snowflake targets
+- **OCR Technology** - Detects and clicks the "Play" button for automatic game restart
+- **Real-time Statistics** - Monitor performance metrics, click counts, and system resource usage
+- **Rich GUI Interface** - Visualize bot activity with detailed panels and real-time updates
+- **Configurable Parameters** - Customize delays, FPS limits, detection thresholds and more
+- **Debug Visualization** - Optional visual feedback showing detection boundaries and confidence scores
+- **Hotkey Controls** - Convenient keyboard shortcuts for all major functions
 
 ## System Requirements
 
-- **OS:** Windows  
-- **Python:** 3.10+ (tested on 3.12.X) 
-- **GPU:** NVIDIA RTX (or use CPU with lower performance)  
-- **CUDA Toolkit:** Required for GPU acceleration (tested with CUDA 12.5 and 11.8)  
-- **Telegram Desktop:** Mandatory for gameplay automation
+### Minimum Advisable Requirements
+- **Operating System:** Windows 10 (64-bit)
+- **CPU:** Intel Core i5 or AMD Ryzen 5 equivalent
+- **RAM:** 8GB
+- **GPU:** NVIDIA GPU with CUDA support (tested with CUDA 11.8 and 12.5)
+- **Python:** Version 3.12.x
+- **Storage:** 2GB free space
+- **Software:** Telegram Desktop application
+
+### Recommended Advisable Configuration
+- **Operating System:** Windows 10/11 (64-bit)
+- **CPU:** Intel Core i7/i9+ or AMD Ryzen 7/9+
+- **RAM:** 16GB+
+- **GPU:** NVIDIA GPU with CUDA support (tested with CUDA 11.8 and 12.5)
+- **Python:** Version 3.12.x
+- **Storage:** 5GB+ storage
 
 ## Installation
 
-1. **(GPU) Install CUDA Toolkit**  
-   - Download from [NVIDIA](https://developer.nvidia.com/cuda-downloads) and follow the instructions.
-2. **Clone the Repository**  
+1. **Clone the Repository**
    ```bash
    git clone https://github.com/fedyacpp/BlumClicker.git
    cd BlumClicker
    ```
-3. **Install Python Dependencies**  
-   - **GPU Users:**  
-     ```bash
-     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-     pip install -r requirements.txt
-     ```
-   - **CPU Users:**  
-     ```bash
-     pip install torch torchvision torchaudio
-     pip install -r requirements.txt
-     ```
-4. **Download `best.pt`**  
-   - [Link](https://drive.google.com/file/d/1lUTl4GulseoWs_vhPnYp0qkIYaumKMNg/view?usp=sharing) and place it in the BlumClicker directory.
-5. **Verify CUDA (GPU Only)**  
+
+2. **Install Required Python Packages**
+   
+   For GPU users (recommended for best performance):
+   ```bash
+   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+   pip install -r requirements.txt
+   ```
+   
+   For CPU users:
+   ```bash
+   pip install torch torchvision torchaudio
+   pip install -r requirements.txt
+   ```
+
+3. **Download Model File**
+   
+   Download the pre-trained YOLO model file:
+   - [best.pt](https://drive.google.com/file/d/1lUTl4GulseoWs_vhPnYp0qkIYaumKMNg/view?usp=sharing)
+   - Place it in the BlumClicker root directory
+
+4. **Verify CUDA Availability** (GPU users only)
    ```bash
    python isCudaAvailable.py
    ```
-6. **Run**  
+
+5. **Launch BlumClicker**
    ```bash
    python main.py
    ```
 
 ## Usage
 
-1. Open Blum's Drop Game in Telegram Desktop.  
-2. Run `python main.py`.  
-3. The script detects the game window and automates clicks.  
-4. Press **CTRL+Q** twice to stop.
+1. **Start the Application**
+   ```bash
+   python main.py
+   ```
 
-## Settings
+2. **Window Detection**
+   - The bot will automatically detect your Telegram window
 
-- **Delays:** Customize click intervals.  
-- **Debug Mode:** Displays model predictions.  
-- **FPS Limiter:** Reduces CPU/GPU load.  
+3. **Controls**
+   - Use the hotkeys to control the bot (see [Hotkeys](#hotkeys) section)
+   - The main interface displays real-time statistics and status information
+   - Access settings via CTRL+W to customize behavior
+
+4. **Operation Modes**
+   - Auto-Play Mode: Automatically restarts the game when it ends
+   - Manual Mode: Requires manual restart of games
+   - Debug Mode: Shows visual detection feedback
+
+## Configuration
+
+BlumClicker offers extensive configuration options through its settings panel (CTRL+W):
+
+### Timing Settings
+- **Delay Between Clicks** - Time to wait between consecutive clicks (seconds)
+- **Delay Before Click** - Time to wait before performing a click (seconds)
+- **FPS Limit** - Maximum frames processed per second
+- **Retry Count** - Number of retry attempts for operations
+
+### Feature Options
+- **Auto-Play** - Automatically start new games
+- **Debug Window** - Show visual detection feedback
+- **Click All Bombs** - Click on all detected objects, not just targets
+- **CPU Mode** - Force CPU-only processing (disable GPU)
+- **Sound Effects** - Enable/disable sound feedback for clicks
+
+### Model Settings
+- **Model Path** - Location of the YOLO model file
+- **Model Reload** - Ability to hot-swap models during runtime
+
+## Hotkeys
+
+| Hotkey | Function |
+|--------|----------|
+| CTRL+Q | Exit the application |
+| CTRL+X | Pause/Resume bot operation |
+| CTRL+W | Open settings panel |
+| CTRL+D | Toggle debug visualization |
+| CTRL+R | Reload the model |
+| CTRL+F | Re-detect Telegram window |
+| CTRL+A | Toggle auto-play mode |
+| CTRL+S | Toggle sound effects |
 
 ## Troubleshooting
 
-- **CUDA Not Detected:** Update drivers and check your GPU compatibility.  
-- **Dependency Errors:** Ensure you installed/updated `ultralytics` and the correct `torch` version.  
-- **No Model File:** Confirm `best.pt` is in the BlumClicker directory.
+### Common Issues
 
-## Roadmap
+| Problem | Solution |
+|---------|----------|
+| **Window not detected** | Ensure Telegram is running and visible; try CTRL+F to re-detect |
+| **CUDA errors** | Verify GPU and CUDA installation; switch to CPU mode if needed |
+| **OCR not working** | Ensure EasyOCR dependencies are installed properly |
+| **Inaccurate detection** | Ensure the model file is correctly loaded and running on supported GPU |
+| **Permission errors** | Run as administrator for proper window access |
 
-- [x] Additional info in README  
-- [x] Improved terminal output  
-- [x] Enhanced user-friendliness  
-- [x] Higher model accuracy  
-- [x] Custom settings  
-- [x] Larger dataset  
-- [x] Auto-replay  
-- [x] Debug mode  
-- [x] FPS limiter  
-- [ ] Click probability (currently not feasible)  
+### Logs and Diagnostics
+
+- Check `bot_log.txt` for detailed error information
+- Enable debug mode (CTRL+D) to visualize detection performance
+- Use the settings panel to view system resource usage and last errors
+
+## Advanced Features
+
+### Custom Models
+You can use your own trained YOLO models by selecting them in the settings panel:
+1. Train a custom YOLOv11 model
+2. Place the .pt file in an accessible location
+3. Set the model path in settings and reload
+
+### Performance Optimization
+- **GPU Acceleration**: Enabled by default when available
+- **Memory Management**: Configure with appropriate FPS limits
+- **CPU Mode**: Available for systems without compatible GPUs
+
+## FAQ
+
+**Q: Is this against Telegram's terms of service?**  
+A: Automation tools may violate Telegram's terms of service. Use at your own discretion.
+
+**Q: Can I use multiple instances for different games?**  
+A: Technically yes, but it won't work as supposed right out of the box.
+
+**Q: Does BlumClicker work on MacOS/Linux?**  
+A: Currently, it's Windows-only due to the specific window handling mechanisms.
+
+**Q: How accurate is the detection?**  
+A: With YOLOv11 and proper setup, detection accuracy is typically over 95%.
+
+**Q: Will my account get banned?**  
+A: Use at your own risk. The tool tries to simulate human-like behavior, but no guarantees.
 
 ## Contributing
 
-Contributions are welcome. Fork the repo and create a pull request.
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
 ## Contact
 
-- **Discord:** [fedyacpp](https://discord.com/users/fedyacpp)  
+- **GitHub Issues:** [Report bugs or request features](https://github.com/fedyacpp/BlumClicker/issues)
+- **Email:** [fedyacpp@protonmail.com](mailto:fedyacpp@protonmail.com)
 - **Telegram:** [@fedyacpp](https://t.me/fedyacpp)
+
+---
+
+**Disclaimer:** This tool is for educational purposes only. I'm not responsible for any misuse or violations of terms of service that may result from using this software.
