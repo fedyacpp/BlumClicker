@@ -1,9 +1,3 @@
 {
-    "DELAY_BETWEEN_CLICKS": 0.0,
-    "DELAY_BEFORE_CLICK": 0.0,
-    "FPS_LOCK": 60,
-    "AUTO_PLAY": true,
-    "MODEL_PATH": "",
-    "SHOW_DEBUG_WINDOW": false,
-    "CLICK_ALL_BOMBS": false
+    
 }
