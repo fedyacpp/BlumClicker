@@ -1506,8 +1506,9 @@ class BlumClicker:
 
     def preprocess_image(self, image: np.ndarray) -> np.ndarray:
         try:
-            rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            return cv2.resize(rgb, (640, 640))
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            gray_rgb = cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB)
+            return cv2.resize(gray_rgb, (640, 640))
         except Exception as e:
             self.console.log(f"[red]{self.loc.get('image_preprocess_error', e)}[/red]")
             logging.error(self.loc.get('image_preprocess_error', e))
