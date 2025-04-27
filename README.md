@@ -1,9 +1,9 @@
 # BlumClicker
 
 **Version:** 2.1.0 β  
-**Last Updated:** March 19, 2025
+**Last Updated:** April 27, 2025
 
-I recommend you deleting ```settings.json``` file to avoid any possible conflicts; you can choose language and windows to focus, check settings tab out! This was a really hard-to-make update, because of my personal life, so if you encounter any bugs - please, report 'em.
+Update `main.py` and model weights in order for script to be compatible with TGE update!
 
 BlumClicker is an automation tool for Blum's Drop Game on Telegram, powered by YOLOv11 computer vision technology for precise snowflake detection and interaction. The tool features a graphical interface, extensive customization options, and intelligent gameplay automation.
 
